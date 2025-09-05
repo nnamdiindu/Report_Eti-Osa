@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+            <!-- Main Content -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Dashboard</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-md btn-dark">
+                                <a href="{{ url_for('report_issue') }}" class="text-decoration-none text-white">+ Report an Issue</a>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Content -->
+                <div class="dashboard-cards">
+                    <div class="card-metric card-total">
+                        <div class="metric-number text-dark">45</div>
+                        <div class="metric-label">Total Reports</div>
+                    </div>
+                    <div class="card-metric card-pending">
+                        <div class="metric-number text-warning">12</div>
+                        <div class="metric-label">Pending Issues</div>
+                    </div>
+                    <div class="card-metric card-resolved">
+                        <div class="metric-number text-success">28</div>
+                        <div class="metric-label">Resolved Issues</div>
+                    </div>
+                    <div class="card-metric card-progress">
+                        <div class="metric-number">5</div>
+                        <div class="metric-label">In Progress</div>
+                    </div>
+                </div>
+
+                <!-- Recent Reports Section -->
+                <div class="mt-4">
+                    <h3>Recent Reports</h3>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Issue Type</th>
+                                    <th scope="col">Location</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>Road Pothole</td>
+                                    <td>Victoria Island</td>
+                                    <td><span class="badge bg-warning">Pending</span></td>
+                                    <td>2025-09-03</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>Street Light</td>
+                                    <td>Lekki Phase 1</td>
+                                    <td><span class="badge bg-success">Resolved</span></td>
+                                    <td>2025-09-02</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>Waste Management</td>
+                                    <td>Ikoyi</td>
+                                    <td><span class="badge bg-info">In Progress</span></td>
+                                    <td>2025-09-01</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+  {% endblock %}

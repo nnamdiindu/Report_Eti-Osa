@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Report an Issue{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div class="w-100">
+                    <h1 class="h2">Report an Issue</h1>
+                    <p class="text-muted">Help improve your community by reporting issues</p>
+                </div>
+            </div>
+
+            <form class="needs-validation" action="{{ url_for('report_issue') }}" method="post">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="issueTitle" class="form-label">Issue Title <span class="text-danger">*</span></label>
+                        <input name="issue_title" type="text" class="form-control" id="issueTitle" placeholder="Brief description of the issue" required>
+                        <div class="invalid-feedback">
+                            Please provide a title for the issue.
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                        <select name="category" class="form-select" id="category">
+                            <option value="">Choose issue type...</option>
+                            <option value="road">Road/Infrastructure</option>
+                            <option value="lighting">Street Lighting</option>
+                            <option value="waste">Waste Management</option>
+                            <option value="water">Water Supply</option>
+                            <option value="drainage">Drainage/Flooding</option>
+                            <option value="security">Security/Safety</option>
+                            <option value="environmental">Environmental</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Please select an issue type.
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
+                        <input name="location" type="text" class="form-control" id="location" placeholder="Street address or landmark" required>
+                        <div class="invalid-feedback">
+                            Please enter the location of the issue.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="area" class="form-label">Area/District <span class="text-danger">*</span></label>
+                        <select name="area" class="form-select" id="area" required="">
+                            <option value="">Choose area...</option>
+                            <option value="victoria-island">Victoria Island</option>
+                            <option value="ikoyi">Ikoyi</option>
+                            <option value="lekki-phase1">Lekki Phase 1</option>
+                            <option value="lekki-phase2">Lekki Phase 2</option>
+                            <option value="ajah">Ajah</option>
+                            <option value="banana-island">Banana Island</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <div class="invalid-feedback">
+                            Please select an area.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="priority" class="form-label">Priority Level</label>
+                        <select name="priority" class="form-select" id="priority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="description" class="form-label">Detailed Description <span class="text-danger">*</span></label>
+                        <textarea name="description" class="form-control" id="description" rows="4" placeholder="Please provide a detailed description of the issue..." required=""></textarea>
+                        <div class="invalid-feedback">
+                            Please provide a detailed description of the issue.
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="imageUpload" class="form-label">Upload Images <span class="text-muted">(Optional)</span></label>
+                        <input name="file" type="file" class="form-control" id="imageUpload" multiple accept="image/*">
+                        <div class="form-text">You can upload multiple images to help illustrate the issue.</div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button class="btn btn-dark btn-md px-5" type="submit">
+                        Submit Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
