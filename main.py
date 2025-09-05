@@ -122,24 +122,44 @@ def login():
     return render_template("login.html", current_user=current_user, year=year)
 
 @app.route("/dashboard")
+@login_required
 def dashboard():
-    return "<h1>This is the dashboard</h1>"
+    return render_template("dashboard.html", current_user=current_user)
 
-@app.route("/report_issue")
+@app.route("/report_issue", methods=["GET", "POST"])
+@login_required
 def report_issue():
-    return render_template("repost_issue.html")
+    if request.method == "POST":
+        issue_title = request.form.get("issue_title")
+        category = request.form.get("category")
+        location = request.form.get("location")
+        area = request.form.get("area")
+        priority = request.form.get("priority")
+        description = request.form.get("description")
+        file = request.form.get("file")
+
+        print(issue_title, category, location, area, priority, description, file)
+
+
+    return render_template("report_issue.html")
 
 @app.route("/my_report")
-def user_report():
+def user_reports():
     return render_template("user_report.html")
 
 @app.route("/profile")
 def profile():
     return render_template("profile.html")
 
+@app.route("/notifications")
+def notifications():
+    return render_template("notifications.html")
+
 @app.route("/logout")
+@login_required
 def logout():
-    return redirect("login.html")
+    logout_user()
+    return redirect(url_for("login"))
 
 
 
