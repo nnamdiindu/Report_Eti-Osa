@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from flask import Flask, redirect, render_template, url_for, request, flash
+from flask import Flask, redirect, render_template, url_for, request, flash, Response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
 from flask_login import login_required, login_user, current_user, LoginManager, logout_user, UserMixin
@@ -26,6 +26,42 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
+
+class Reports(db.Model):
+    __tablename__ = "reports"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(String(2000), nullable=False)  # Increased length
+    location: Mapped[str] = mapped_column(String(2000), nullable=False)
+    area: Mapped[str] = mapped_column(String(100), nullable=False)
+    priority: Mapped[str] = mapped_column(String(20), nullable=False, default='medium')
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default='pending')
+
+    # Relationship to files
+    files: Mapped[list["ReportFiles"]] = relationship("ReportFiles", back_populates="report",
+                                                      cascade="all, delete-orphan")
+    user: Mapped["User"] = relationship("User", back_populates="reports")
+
+
+class ReportFiles(db.Model):
+    __tablename__ = "report_files"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    report_id: Mapped[int] = mapped_column(Integer, ForeignKey('reports.id'), nullable=False)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    mimetype: Mapped[str] = mapped_column(String(100), nullable=False)
+    file_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    # Relationship back to report
+    report: Mapped["Reports"] = relationship("Reports", back_populates="files")
+
+
+# Update User model to include relationship to reports
 class User(UserMixin, db.Model):
     __tablename__ = "user"
 
@@ -35,19 +71,10 @@ class User(UserMixin, db.Model):
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     phone: Mapped[str] = mapped_column(String(20))
     password: Mapped[str] = mapped_column(String(255), nullable=False)
-    create_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
-class Reports(db.Model):
-    __tablename__ = "reports"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    category: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[str] = mapped_column(String(200), nullable=False)
-    location: Mapped[str] = mapped_column(String(2000), nullable=False)
-    filename: Mapped[str] = mapped_column(String(100), nullable=False)
-    data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
-    mimetype: Mapped[str] = mapped_column(String(100), nullable=False)  # Fixed missing type annotation
-
+    # Relationship to reports
+    reports: Mapped[list["Reports"]] = relationship("Reports", back_populates="user")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -126,33 +153,148 @@ def login():
 def dashboard():
     return render_template("dashboard.html", current_user=current_user)
 
+
 @app.route("/report_issue", methods=["GET", "POST"])
 @login_required
 def report_issue():
     if request.method == "POST":
+        # Get form data
         category = request.form.get("category")
+        description = request.form.get("description")
         location = request.form.get("location")
         area = request.form.get("area")
-        priority = request.form.get("priority")
-        description = request.form.get("description")
-        file = request.form.get("file")
+        priority = request.form.get("priority", 'medium')
 
-        print(category, location, area, priority, description, file)
+        # Handle multiple file uploads
+        uploaded_files = request.files.getlist("file")
+
+        # Validate required fields
+        if not all([category, description, location, area]):
+            flash("Please fill in all required fields.")
+            return redirect(url_for("report_issue"))
+
+        # Process and validate files
+        valid_files = []
+        if uploaded_files:
+            allowed_extensions = {
+                'image': ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'],
+                'video': ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv']
+            }
+            max_file_size = 10 * 1024 * 1024  # 10MB in bytes
+            max_files = 5  # Limit number of files
+
+            if len([f for f in uploaded_files if f.filename != '']) > max_files:
+                flash(f"You can upload a maximum of {max_files} files.")
+                return redirect(url_for("report_issue"))
+
+            for uploaded_file in uploaded_files:
+                if uploaded_file.filename != '':
+                    # Validate file type
+                    file_extension = uploaded_file.filename.rsplit('.', 1)[
+                        1].lower() if '.' in uploaded_file.filename else ''
+
+                    is_valid_file = (
+                            file_extension in allowed_extensions['image'] or
+                            file_extension in allowed_extensions['video']
+                    )
+
+                    if not is_valid_file:
+                        flash(
+                            f"Invalid file type for {uploaded_file.filename}. Please upload only image or video files.")
+                        return redirect(url_for("report_issue"))
+
+                    # Check file size
+                    file_data = uploaded_file.read()
+                    file_size = len(file_data)
+
+                    if file_size > max_file_size:
+                        flash(f"File {uploaded_file.filename} is too large. Please upload files smaller than 10MB.")
+                        return redirect(url_for("report_issue"))
+
+                    # Store valid file info
+                    valid_files.append({
+                        'filename': uploaded_file.filename,
+                        'data': file_data,
+                        'mimetype': uploaded_file.mimetype,
+                        'size': file_size
+                    })
+
+        try:
+            # Create new report
+            new_report = Reports(
+                category=category,
+                description=description,
+                location=location,
+                area=area,
+                priority=priority,
+                user_id=current_user.id
+            )
+
+            db.session.add(new_report)
+            db.session.flush()  # This assigns an ID to new_report without committing
+
+            # Add files if any exist
+            for file_info in valid_files:
+                file_record = ReportFiles(
+                    report_id=new_report.id,
+                    filename=file_info['filename'],
+                    data=file_info['data'],
+                    mimetype=file_info['mimetype'],
+                    file_size=file_info['size']
+                )
+                db.session.add(file_record)
+
+            db.session.commit()
+
+            if valid_files:
+                flash(f"Report successfully submitted with {len(valid_files)} file(s).")
+            else:
+                flash("Report successfully submitted.")
+
+        except Exception as e:
+            db.session.rollback()
+            flash("An error occurred while submitting your report. Please try again.")
+            print(f"Database error: {e}")
+
+        return redirect(url_for("report_issue"))
+
+    return render_template("report_issue.html", current_user=current_user)
 
 
-    return render_template("report_issue.html")
+# Updated route to serve files
+@app.route("/file/<int:file_id>")
+@login_required
+def get_file(file_id):
+    """Serve files stored in the database"""
+    file_record = db.get_or_404(ReportFiles, file_id)
 
-@app.route("/my_report")
+    return Response(
+        file_record.data,
+        mimetype=file_record.mimetype,
+        headers={
+            'Content-Disposition': f'inline; filename="{file_record.filename}"'
+        }
+    )
+
+
+# Updated user reports route
+@app.route("/my_reports")
+@login_required
 def user_reports():
-    return render_template("user_report.html")
+    """Display current user's reports with files"""
+    reports = db.session.execute(
+        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.created_at.desc())
+    ).scalars().all()
+
+    return render_template("user_report.html", current_user=current_user, reports=reports)
 
 @app.route("/profile")
 def profile():
-    return render_template("profile.html")
+    return render_template("profile.html", current_user=current_user)
 
 @app.route("/notifications")
 def notifications():
-    return render_template("notifications.html")
+    return render_template("notifications.html", current_user=current_user)
 
 @app.route("/logout")
 @login_required
