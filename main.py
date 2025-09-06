@@ -130,7 +130,6 @@ def dashboard():
 @login_required
 def report_issue():
     if request.method == "POST":
-        issue_title = request.form.get("issue_title")
         category = request.form.get("category")
         location = request.form.get("location")
         area = request.form.get("area")
@@ -138,7 +137,7 @@ def report_issue():
         description = request.form.get("description")
         file = request.form.get("file")
 
-        print(issue_title, category, location, area, priority, description, file)
+        print(category, location, area, priority, description, file)
 
 
     return render_template("report_issue.html")
