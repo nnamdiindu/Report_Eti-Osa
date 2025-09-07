@@ -1,0 +1,63 @@
+.notification-item {
+    border-left: 4px solid;
+    background: #f8f9fa;
+    transition: all 0.2s ease;
+}
+.notification-item:hover {
+    background: #e9ecef;
+}
+.notification-item.status-updated {
+    border-left-color: #ffc107;
+}
+.notification-item.issue-resolved {
+    border-left-color: #198754;
+}
+.notification-item.report-received {
+    border-left-color: #0d6efd;
+}
+.notification-item.new-comment {
+    border-left-color: #fd7e14;
+}
+.notification-item.completion-delayed {
+    border-left-color: #ffc107;
+}
+.notification-unread {
+    background: #fff;
+}
+.notification-unread::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #dc3545;
+    border-radius: 50%;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.form-switch .form-check-input:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+.notification-summary-badge {
+    background: #dc3545;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.2rem;
+}
+.icon-status { background: #fff3cd; color: #856404; }
+.icon-resolved { background: #d1e7dd; color: #0f5132; }
+.icon-received { background: #cff4fc; color: #055160; }
+.icon-comment { background: #ffe5d0; color: #653208; }
+.icon-delayed { background: #fff3cd; color: #856404; }

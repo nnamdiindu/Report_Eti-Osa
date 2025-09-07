@@ -292,8 +292,10 @@ def user_reports():
 def profile():
     return render_template("profile.html", current_user=current_user)
 
-@app.route("/notifications")
+@app.route("/notifications", methods=["GET", "POST"])
 def notifications():
+    if request.method == "POST":
+        request.form.get("")
     return render_template("notifications.html", current_user=current_user)
 
 @app.route("/logout")

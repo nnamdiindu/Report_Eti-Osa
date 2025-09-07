@@ -1,7 +1,341 @@
 {% extends "base.html" %}
-{% block title %}Notifications{% endblock %}
+
+{% block css_style %}
+<link rel="stylesheet" href="../static/css/notifications.css">
+{% endblock %}
+
 
 {% block content %}
-<div class="container">
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+    <div class="w-100">
+        <h1 class="h2">Notifications</h1>
+        <p class="text-muted">Stay updated on your issue reports</p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <form class="needs-validation" action="{{ url_for('notifications') }}" method="post">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <button class="btn btn-outline-success btn-sm" id="mark-all-read">
+                            <i class="bi bi-check-all"></i> Mark All Read
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Main Notifications Panel -->
+        <div class="col-lg-8 col-md-7">
+
+            <!-- Notifications List -->
+            <div class="notifications-list">
+                <!-- Report Status Updated -->
+                <div class="notification-item status-updated mb-3 rounded position-relative notification-unread">
+                    <div class="d-flex">
+                        <div class="notification-icon icon-status me-3">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Report Status Updated <span class="badge bg-dark ms-1">●</span>
+                                    </h6>
+                                    <p class="mb-1 text-muted">Your pothole report on Maple Street has been marked as
+                                        "In Progress"</p>
+                                    <small class="text-muted">271d ago • Report #1</small>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link btn-sm text-muted" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i
+                                                    class="bi bi-arrow-clockwise me-2"></i>Mark as Read</a></li>
+                                        <li><a class="dropdown-item text-danger" href="#"><i
+                                                    class="bi bi-trash me-2"></i>Delete</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Issue Resolved -->
+                <div class="notification-item issue-resolved mb-3 rounded position-relative notification-unread">
+                    <div class="d-flex">
+                        <div class="notification-icon icon-resolved me-3">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Issue Resolved <span class="badge bg-dark ms-1">●</span></h6>
+                                    <p class="mb-1 text-muted">Your garbage collection report has been resolved</p>
+                                    <small class="text-muted">272d ago • Report #3</small>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link btn-sm text-muted" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i
+                                                    class="bi bi-arrow-clockwise me-2"></i>Mark as Read</a></li>
+                                        <li><a class="dropdown-item text-danger" href="#"><i
+                                                    class="bi bi-trash me-2"></i>Delete</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Received -->
+                <div class="notification-item report-received mb-3 rounded position-relative">
+                    <div class="d-flex">
+                        <div class="notification-icon icon-received me-3">
+                            <i class="bi bi-bell"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Report Received</h6>
+                                    <p class="mb-1 text-muted">Thank you for reporting the broken streetlight. We'll
+                                        review it within 2 business days.</p>
+                                    <small class="text-muted">273d ago • Report #2</small>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link btn-sm text-muted" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item text-danger" href="#"><i
+                                                    class="bi bi-trash me-2"></i>Delete</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New Comment -->
+                <div class="notification-item new-comment mb-3 rounded position-relative">
+                    <div class="d-flex">
+                        <div class="notification-icon icon-comment me-3">
+                            <i class="bi bi-chat-left"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">New Comment</h6>
+                                    <p class="mb-1 text-muted">City maintenance team added a comment to your water leak
+                                        report</p>
+                                    <small class="text-muted">273d ago • Report #4</small>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link btn-sm text-muted" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item text-danger" href="#"><i
+                                                    class="bi bi-trash me-2"></i>Delete</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completion Delayed -->
+                <div class="notification-item completion-delayed mb-3 rounded position-relative">
+                    <div class="d-flex">
+                        <div class="notification-icon icon-delayed me-3">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Completion Delayed</h6>
+                                    <p class="mb-1 text-muted">Due to weather conditions, the estimated completion for
+                                        your pothole report has been extended</p>
+                                    <small class="text-muted">275d ago • Report #1</small>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link btn-sm text-muted" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item text-danger" href="#"><i
+                                                    class="bi bi-trash me-2"></i>Delete</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="col-lg-4 col-md-5 bg-light p-4">
+            <h5 class="mb-4">Notification Settings</h5>
+
+            <!-- Email Notifications -->
+            <div class="mb-4">
+                <h6 class="mb-3">Email Notifications</h6>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-0">Receive updates via email</p>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="email-notifications" checked>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Push Notifications -->
+            <div class="mb-4">
+                <h6 class="mb-3">Push Notifications</h6>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-0">Browser notifications</p>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="push-notifications" checked>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Types -->
+            <div class="mb-4">
+                <h6 class="mb-3">Notification Types</h6>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <strong>Status Updates</strong>
+                        <p class="mb-0 text-muted small">Report progress changes</p>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="status-updates" checked>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <strong>Comments</strong>
+                        <p class="mb-0 text-muted small">New comments on reports</p>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="comments" checked>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Resolutions</strong>
+                        <p class="mb-0 text-muted small">When issues are resolved</p>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="resolutions" checked>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Summary -->
+            <div class="mb-4">
+                <h6 class="mb-3">Notification Summary</h6>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Total</span>
+                    <span class="fw-bold">5</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Unread</span>
+                    <span class="notification-summary-badge">2</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>This Week</span>
+                    <span class="fw-bold">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Mark all as read functionality
+    document.getElementById('mark-all-read').addEventListener('click', function () {
+        const unreadItems = document.querySelectorAll('.notification-unread');
+        unreadItems.forEach(item => {
+            item.classList.remove('notification-unread');
+        });
+
+        // Update unread count
+        const unreadCount = document.getElementById('unread-count');
+        unreadCount.textContent = '0 unread';
+        unreadCount.classList.remove('bg-secondary');
+        unreadCount.classList.add('bg-success');
+    });
+
+    // Individual notification actions
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function (e) {
+            e.preventDefault();
+            const action = this.textContent.trim();
+
+            if (action.includes('Mark as Read')) {
+                const notification = this.closest('.notification-item');
+                notification.classList.remove('notification-unread');
+
+                // Update unread count
+                const unreadItems = document.querySelectorAll('.notification-unread').length;
+                const unreadCount = document.getElementById('unread-count');
+                unreadCount.textContent = `${unreadItems} unread`;
+
+                if (unreadItems === 0) {
+                    unreadCount.classList.remove('bg-secondary');
+                    unreadCount.classList.add('bg-success');
+                }
+            } else if (action.includes('Delete')) {
+                const notification = this.closest('.notification-item');
+                notification.style.opacity = '0.5';
+                setTimeout(() => {
+                    notification.remove();
+
+                    // Update counts
+                    const totalItems = document.querySelectorAll('.notification-item').length;
+                    const unreadItems = document.querySelectorAll('.notification-unread').length;
+
+                    // Update summary
+                    document.querySelector('.mb-4:last-child .d-flex:nth-child(2) .fw-bold').textContent = totalItems;
+
+                    const unreadCount = document.getElementById('unread-count');
+                    unreadCount.textContent = `${unreadItems} unread`;
+
+                    if (unreadItems === 0) {
+                        unreadCount.classList.remove('bg-secondary');
+                        unreadCount.classList.add('bg-success');
+                    }
+                }, 300);
+            }
+        });
+    });
+
+    // Toggle switch animations
+    document.querySelectorAll('.form-check-input').forEach(toggle => {
+        toggle.addEventListener('change', function () {
+            // Add visual feedback
+            this.parentElement.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.parentElement.style.transform = 'scale(1)';
+            }, 100);
+        });
+    });
+</script> 
 {% endblock %}
