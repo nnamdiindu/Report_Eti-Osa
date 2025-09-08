@@ -66,12 +66,13 @@ class User(UserMixin, db.Model):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    first_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    full_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    # last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     phone: Mapped[str] = mapped_column(String(20))
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    address: Mapped[str] = mapped_column(String(1000), nullable=False)
 
     # Relationship to reports
     reports: Mapped[list["Reports"]] = relationship("Reports", back_populates="user")
@@ -114,17 +115,17 @@ def register():
             salt_length=8
         )
         new_user = User(
-            first_name=request.form.get("fname"),
-            last_name=request.form.get("lname"),
+            full_name=request.form.get("full_name").title(),
             email=email,
             phone=request.form.get("phone"),
-            password=hashed_and_salted_password
+            password=hashed_and_salted_password,
+            address=request.form.get("address")
         )
         db.session.add(new_user)
         db.session.commit()
 
         login_user(new_user)
-        return redirect(url_for("index"))
+        return redirect(url_for("dashboard"))
     return render_template("register.html", current_user=current_user, year=year)
 
 @app.route("/login", methods=["GET", "POST"])
