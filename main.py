@@ -290,8 +290,13 @@ def user_reports():
     return render_template("user_report.html", current_user=current_user, reports=reports)
 
 @app.route("/profile")
+@login_required
 def profile():
     return render_template("profile.html", current_user=current_user)
+
+@app.route("/edit_profile/<int:user_id>", methods=["POST"])
+def edit_profile(user_id):
+    pass
 
 @app.route("/notifications", methods=["GET", "POST"])
 def notifications():
