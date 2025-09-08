@@ -34,7 +34,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start mb-4">
                         <div class="profile-avatar me-3">
-                            DU
+                            {{ current_user.full_name.split(" ")[0][0] }}{{ current_user.full_name.split(" ")[1][0] }}
                         </div>
                         <div class="flex-grow-1">
                             <div id="nameDisplay">
@@ -165,19 +165,23 @@
                 <div class="card-body">
                     <div class="activity-item">
                         <span class="activity-label">Total Reports</span>
-                        <span class="activity-value">4</span>
+                        <span class="activity-value">{{ reports|length  }}</span>
+                    </div>
+                    <div class="activity-item">
+                        <span class="activity-label">Issue Pending</span>
+                        <span class="activity-value">{{ pending|length }}</span>
                     </div>
                     <div class="activity-item">
                         <span class="activity-label">Issues Resolved</span>
-                        <span class="activity-value">1</span>
+                        <span class="activity-value">0</span>
                     </div>
                     <div class="activity-item">
                         <span class="activity-label">Community Points</span>
-                        <span class="activity-value">120</span>
+                        <span class="activity-value">0</span>
                     </div>
                     <div class="activity-item">
                         <span class="activity-label">Success Rate</span>
-                        <span class="activity-value">25%</span>
+                        <span class="activity-value">0%</span>
                     </div>
                 </div>
             </div>

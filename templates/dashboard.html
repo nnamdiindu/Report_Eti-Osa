@@ -18,19 +18,19 @@
                 <!-- Dashboard Content -->
                 <div class="dashboard-cards">
                     <div class="card-metric card-total">
-                        <div class="metric-number text-dark">45</div>
+                        <div class="metric-number text-dark">{{ reports|length }}</div>
                         <div class="metric-label">Total Reports</div>
                     </div>
                     <div class="card-metric card-pending">
-                        <div class="metric-number text-warning">12</div>
+                        <div class="metric-number text-warning">{{ pending|length }}</div>
                         <div class="metric-label">Pending Issues</div>
                     </div>
                     <div class="card-metric card-resolved">
-                        <div class="metric-number text-success">28</div>
+                        <div class="metric-number text-success">0</div>
                         <div class="metric-label">Resolved Issues</div>
                     </div>
                     <div class="card-metric card-progress">
-                        <div class="metric-number">5</div>
+                        <div class="metric-number">0</div>
                         <div class="metric-label">In Progress</div>
                     </div>
                 </div>
@@ -43,34 +43,24 @@
                             <thead>
                                 <tr>
                                     <th scope="col">#</th>
-                                    <th scope="col">Issue Type</th>
+                                    <th scope="col">Category</th>
+                                    <th scope="col">Description</th>
                                     <th scope="col">Location</th>
                                     <th scope="col">Status</th>
                                     <th scope="col">Date</th>
                                 </tr>
                             </thead>
                             <tbody>
+                                {% for report in reports|reverse %}
                                 <tr>
-                                    <td>1</td>
-                                    <td>Road Pothole</td>
-                                    <td>Victoria Island</td>
+                                    <td>{{ report.id }}</td>
+                                    <td>{{ report.category|title }}</td>
+                                    <td>{{ report.description|title }}</td>
+                                    <td>{{ report.area|title }}</td>
                                     <td><span class="badge bg-warning">Pending</span></td>
-                                    <td>2025-09-03</td>
+                                    <td>{{ report.created_at.strftime('%B %d, %Y at %I:%M %p') }}</td>
                                 </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>Street Light</td>
-                                    <td>Lekki Phase 1</td>
-                                    <td><span class="badge bg-success">Resolved</span></td>
-                                    <td>2025-09-02</td>
-                                </tr>
-                                <tr>
-                                    <td>3</td>
-                                    <td>Waste Management</td>
-                                    <td>Ikoyi</td>
-                                    <td><span class="badge bg-info">In Progress</span></td>
-                                    <td>2025-09-01</td>
-                                </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>

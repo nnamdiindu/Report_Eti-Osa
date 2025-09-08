@@ -151,7 +151,17 @@ def login():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html", current_user=current_user)
+    """Display current user's reports with files"""
+    reports = db.session.execute(
+        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.created_at.desc())
+    ).scalars().all()
+
+    """Display current user's pending reports"""
+    pending = db.session.execute(
+        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.status)
+    ).scalars().all()
+
+    return render_template("dashboard.html", reports=reports, pending=pending, current_user=current_user)
 
 
 @app.route("/report_issue", methods=["GET", "POST"])
@@ -291,7 +301,16 @@ def user_reports():
 @app.route("/profile")
 @login_required
 def profile():
-    return render_template("profile.html", current_user=current_user)
+    """Display current user's reports with files"""
+    reports = db.session.execute(
+        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.created_at.desc())
+    ).scalars().all()
+
+    """Display current user's pending reports"""
+    pending = db.session.execute(
+        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.status)
+    ).scalars().all()
+    return render_template("profile.html", reports=reports, pending=pending, current_user=current_user)
 
 @app.route("/edit_profile", methods=["POST"])
 @login_required  # Add this decorator since you're using current_user
