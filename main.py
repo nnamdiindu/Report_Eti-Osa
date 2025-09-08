@@ -287,16 +287,44 @@ def get_file(file_id):
     )
 
 
-# Updated user reports route
-@app.route("/my_reports")
+@app.route("/my_reports", methods=["GET", "POST"])
 @login_required
 def user_reports():
     """Display current user's reports with files"""
-    reports = db.session.execute(
-        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.created_at.desc())
-    ).scalars().all()
 
-    return render_template("user_report.html", current_user=current_user, reports=reports)
+    selected_category = None  # Default for GET requests
+
+    if request.method == "POST":
+        work_category = request.form.get("category")
+        selected_category = work_category  # Store the selected category
+
+        if work_category and work_category != "reports":  # "reports" means "All Reports"
+            # Filter reports based on dropdown selection
+            reports = db.session.execute(
+                db.select(Reports)
+                .where(Reports.user_id == current_user.id)
+                .where(Reports.status == work_category)
+                .order_by(Reports.created_at.desc())
+            ).scalars().all()
+        else:
+            # Show all reports
+            reports = db.session.execute(
+                db.select(Reports)
+                .where(Reports.user_id == current_user.id)
+                .order_by(Reports.created_at.desc())
+            ).scalars().all()
+    else:
+        # GET request - show all reports
+        reports = db.session.execute(
+            db.select(Reports)
+            .where(Reports.user_id == current_user.id)
+            .order_by(Reports.created_at.desc())
+        ).scalars().all()
+
+    return render_template("user_report.html",
+                           current_user=current_user,
+                           reports=reports,
+                           selected_category=selected_category)
 
 @app.route("/profile")
 @login_required
@@ -308,8 +336,11 @@ def profile():
 
     """Display current user's pending reports"""
     pending = db.session.execute(
-        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.status)
-    ).scalars().all()
+    db.select(Reports)
+    .where(Reports.user_id == current_user.id)
+    .where(Reports.status == 'pending')
+    .order_by(Reports.status)
+).scalars().all()
     return render_template("profile.html", reports=reports, pending=pending, current_user=current_user)
 
 @app.route("/edit_profile", methods=["POST"])

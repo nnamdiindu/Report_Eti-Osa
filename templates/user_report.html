@@ -10,18 +10,27 @@
     </div>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
-                <form class="needs-validation" action="{{ url_for('user_reports') }}" method="post">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <select name="category" class="form-select" id="category">
-                                <option value="reports">All Reports</option>
-                                <option value="submitted">Submitted</option>
-                                <option value="progress">In Progress</option>
-                                <option value="resolved">Resolved</option>
-                            </select>
-                        </div>
+            <form class="needs-validation" action="{{ url_for('user_reports') }}" method="post">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <select name="category" class="form-select" id="category" onchange="this.form.submit()">
+                            {% set options = [
+                            ('reports', 'All Reports'),
+                            ('pending', 'Pending'),
+                            ('work_in_progress', 'Work in Progress'),
+                            ('resolved', 'Resolved')
+                            ] %}
+
+                            {% for value, label in options %}
+                            <option value="{{ value }}" {% if (selected_category==value) or (selected_category is none
+                                and value=='reports' ) %} selected {% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
-                </form>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -48,7 +57,8 @@
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">{{ report.category|title }} Issue</h5>
-            <span class="badge bg-{{ 'danger' if report.priority == 'urgent' else 'warning' if report.priority == 'high' else 'info' if report.priority == 'medium' else 'secondary' }}">
+            <span
+                class="badge bg-{{ 'danger' if report.priority == 'urgent' else 'warning' if report.priority == 'high' else 'info' if report.priority == 'medium' else 'secondary' }}">
                 {{ report.priority|title }}
             </span>
         </div>
@@ -61,72 +71,70 @@
         <p class="text-muted small mb-3">
             <i class="fas fa-clock"></i> Submitted: {{ report.created_at.strftime('%B %d, %Y at %I:%M %p') }}
         </p>
-        
+
         {% if report.files %}
-            <div class="mt-3">
-                <h6>Attachments ({{ report.files|length }}):</h6>
-                <div class="row g-2">
-                    {% for file in report.files %}
-                        <div class="col-md-4 col-sm-6">
-                            {% if file.mimetype.startswith('image/') %}
-                                <!-- Display image thumbnail -->
-                                <div class="position-relative">
-                                    <img src="{{ url_for('get_file', file_id=file.id) }}" 
-                                         class="img-fluid rounded shadow-sm" 
-                                         alt="{{ file.filename }}"
-                                         style="width: 100%; height: 150px; object-fit: cover; cursor: pointer;"
-                                         data-bs-toggle="modal" 
-                                         data-bs-target="#imageModal{{ file.id }}">
-                                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white p-1 rounded-bottom">
-                                        <small>{{ file.filename[:20] }}{{ '...' if file.filename|length > 20 else '' }}</small>
-                                    </div>
-                                </div>
-                                
-                                <!-- Image Modal -->
-                                <div class="modal fade" id="imageModal{{ file.id }}" tabindex="-1">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">{{ file.filename }}</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body text-center">
-                                                <img src="{{ url_for('get_file', file_id=file.id) }}" 
-                                                     class="img-fluid" 
-                                                     alt="{{ file.filename }}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                            {% elif file.mimetype.startswith('video/') %}
-                                <!-- Display video thumbnail -->
-                                <div class="position-relative">
-                                    <video class="img-fluid rounded shadow-sm" 
-                                           style="width: 100%; height: 150px; object-fit: cover;"
-                                           controls>
-                                        <source src="{{ url_for('get_file', file_id=file.id) }}" 
-                                                type="{{ file.mimetype }}">
-                                        Your browser does not support the video tag.
-                                    </video>
-                                    <div class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white p-1 rounded-bottom">
-                                        <small>{{ file.filename[:20] }}{{ '...' if file.filename|length > 20 else '' }}</small>
-                                    </div>
-                                </div>
-                            {% endif %}
-                            <small class="text-muted d-block mt-1">
-                                Size: {{ "%.1f"|format(file.file_size / 1024 / 1024) }} MB
-                            </small>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        {% else %}
-            <p class="text-muted fst-italic">No attachments</p>
-        {% endif %}
-        
         <div class="mt-3">
-            <span class="badge bg-{{ 'success' if report.status == 'resolved' else 'warning' if report.status == 'in_progress' else 'secondary' }}">
+            <h6>Attachments ({{ report.files|length }}):</h6>
+            <div class="row g-2">
+                {% for file in report.files %}
+                <div class="col-md-4 col-sm-6">
+                    {% if file.mimetype.startswith('image/') %}
+                    <!-- Display image thumbnail -->
+                    <div class="position-relative">
+                        <img src="{{ url_for('get_file', file_id=file.id) }}" class="img-fluid rounded shadow-sm"
+                            alt="{{ file.filename }}"
+                            style="width: 100%; height: 150px; object-fit: cover; cursor: pointer;"
+                            data-bs-toggle="modal" data-bs-target="#imageModal{{ file.id }}">
+                        <div
+                            class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white p-1 rounded-bottom">
+                            <small>{{ file.filename[:20] }}{{ '...' if file.filename|length > 20 else '' }}</small>
+                        </div>
+                    </div>
+
+                    <!-- Image Modal -->
+                    <div class="modal fade" id="imageModal{{ file.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ file.filename }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <img src="{{ url_for('get_file', file_id=file.id) }}" class="img-fluid"
+                                        alt="{{ file.filename }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% elif file.mimetype.startswith('video/') %}
+                    <!-- Display video thumbnail -->
+                    <div class="position-relative">
+                        <video class="img-fluid rounded shadow-sm"
+                            style="width: 100%; height: 150px; object-fit: cover;" controls>
+                            <source src="{{ url_for('get_file', file_id=file.id) }}" type="{{ file.mimetype }}">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div
+                            class="position-absolute bottom-0 start-0 end-0 bg-dark bg-opacity-75 text-white p-1 rounded-bottom">
+                            <small>{{ file.filename[:20] }}{{ '...' if file.filename|length > 20 else '' }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <small class="text-muted d-block mt-1">
+                        Size: {{ "%.1f"|format(file.file_size / 1024 / 1024) }} MB
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <p class="text-muted fst-italic">No attachments</p>
+        {% endif %}
+
+        <div class="mt-3">
+            <span
+                class="badge bg-{{ 'success' if report.status == 'resolved' else 'warning' if report.status == 'in_progress' else 'secondary' }}">
                 {{ report.status|title }}
             </span>
         </div>
@@ -138,7 +146,7 @@
 <div class="text-center py-5">
     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
     <h4>No Reports Yet</h4>
-    <p class="text-muted">You haven't submitted any reports. <a href="{{ url_for('report_issue') }}">Submit your first report</a></p>
+    <p class="text-muted">You have no report in this category. <a href="{{ url_for('report_issue') }}">Submit your report</a></p>
 </div>
 {% endif %}
 {% endblock %}
