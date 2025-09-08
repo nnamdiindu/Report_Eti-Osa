@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from flask import Flask, redirect, render_template, url_for, request, flash, Response
+from flask import Flask, redirect, render_template, url_for, request, flash, Response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
 from flask_login import login_required, login_user, current_user, LoginManager, logout_user, UserMixin
@@ -67,7 +67,6 @@ class User(UserMixin, db.Model):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     full_name: Mapped[str] = mapped_column(String(200), nullable=False)
-    # last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     phone: Mapped[str] = mapped_column(String(20))
     password: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -294,8 +293,87 @@ def user_reports():
 def profile():
     return render_template("profile.html", current_user=current_user)
 
-@app.route("/edit_profile/<int:user_id>", methods=["POST"])
-def edit_profile(user_id):
+@app.route("/edit_profile", methods=["POST"])
+@login_required  # Add this decorator since you're using current_user
+def edit_profile():
+    if request.method == "POST":
+        try:
+            # Get JSON data from the request
+            data = request.get_json()
+
+            if not data:
+                return jsonify({
+                    'success': False,
+                    'message': 'No data provided'
+                }), 400
+
+            # Validate and update user fields
+            full_name = data.get('name', '').strip()  # Note: changed from 'full_name' to 'name' to match your JS
+            email = data.get('email', '').strip()
+            phone = data.get('phone', '').strip()
+            address = data.get('address', '').strip()
+
+            # Basic validation
+            if not full_name:
+                return jsonify({
+                    'success': False,
+                    'message': 'Name is required'
+                }), 400
+
+            if not email:
+                return jsonify({
+                    'success': False,
+                    'message': 'Email is required'
+                }), 400
+
+            # Check if email is valid (basic check)
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                return jsonify({
+                    'success': False,
+                    'message': 'Please enter a valid email address'
+                }), 400
+
+            # Check if email already exists for another user
+            existing_user = User.query.filter(User.email == email, User.id != current_user.id).first()
+            if existing_user:
+                return jsonify({
+                    'success': False,
+                    'message': 'This email address is already in use'
+                }), 400
+
+            # Update current user's fields
+            current_user.full_name = full_name  # Make sure this matches your User model field name
+            current_user.email = email
+            current_user.phone = phone
+            current_user.address = address
+
+            # Save changes to database
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'message': 'Profile updated successfully',
+                'data': {
+                    'full_name': current_user.full_name,
+                    'email': current_user.email,
+                    'phone': current_user.phone,
+                    'address': current_user.address
+                }
+            })
+
+        except Exception as e:
+            # Rollback any database changes in case of error
+            db.session.rollback()
+
+            return jsonify({
+                'success': False,
+                'message': f'An error occurred while updating profile: {str(e)}'
+            }), 500
+
+@app.route("/change_password", methods=["GET", "POST"])
+def change_password():
     pass
 
 @app.route("/notifications", methods=["GET", "POST"])
