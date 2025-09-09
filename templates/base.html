@@ -130,6 +130,46 @@
                 padding-top: 80px;
             }
         }
+
+        /* Hover state code */
+
+        /* Sidebar navigation link styling */
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #333;
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
+    border-radius: 4px; /* Optional: adds rounded corners */
+    margin: 2px 8px; /* Optional: adds some spacing */
+}
+
+/* Hover effect - bg-secondary background */
+.sidebar .nav-link:hover {
+    background-color: #6c757d !important; /* Bootstrap's bg-secondary color */
+    color: #fff !important; /* White text on hover for better contrast */
+}
+
+/* Active/clicked state - dark background */
+.sidebar .nav-link.active {
+    background-color: #212529 !important; /* Dark background (Bootstrap's bg-dark) */
+    color: #fff !important; /* White text */
+}
+
+/* Ensure icons inherit the text color */
+.sidebar .nav-link svg {
+    fill: currentColor; /* Makes SVG icons use the same color as text */
+    margin-right: 8px;
+}
+
+/* Optional: Add a subtle shadow on hover for more visual feedback */
+.sidebar .nav-link:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Ensure active state overrides hover */
+.sidebar .nav-link.active:hover {
+    background-color: #212529 !important;
+    color: #fff !important;
+}
     </style>
 </head>
 
@@ -216,6 +256,39 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
+        <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all sidebar navigation links
+    const sidebarLinks = document.querySelectorAll('.sidebar .nav-link');
+    
+    // Function to remove active class from all links
+    function removeActiveClasses() {
+        sidebarLinks.forEach(link => {
+            link.classList.remove('active');
+        });
+    }
+    
+    // Add click event listener to each link
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            // Remove active class from all links
+            removeActiveClasses();
+            // Add active class to clicked link
+            this.classList.add('active');
+        });
+    });
+    
+    // Set active link based on current URL (for when page loads)
+    const currentPath = window.location.pathname;
+    sidebarLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && (currentPath === href || (currentPath === '/' && href.includes('dashboard')))) {
+            removeActiveClasses();
+            link.classList.add('active');
+        }
+    });
+});
+</script>
 </body>
 
 </html>
