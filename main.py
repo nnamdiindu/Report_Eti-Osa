@@ -1,4 +1,4 @@
-import os
+import os, requests
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, url_for, request, flash, Response, jsonify
@@ -32,13 +32,21 @@ class Reports(db.Model):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     category: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[str] = mapped_column(String(2000), nullable=False)  # Increased length
+    description: Mapped[str] = mapped_column(String(2000), nullable=False)
     location: Mapped[str] = mapped_column(String(2000), nullable=False)
     area: Mapped[str] = mapped_column(String(100), nullable=False)
     priority: Mapped[str] = mapped_column(String(20), nullable=False, default='medium')
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     status: Mapped[str] = mapped_column(String(50), nullable=False, default='pending')
+
+    # GPS and location data
+    latitude: Mapped[float] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float] = mapped_column(Float, nullable=True)
+
+    # OPTIONAL: Additional place data for enhanced functionality
+    place_id: Mapped[str] = mapped_column(String(200), nullable=True)  # Google Place ID
+    formatted_address: Mapped[str] = mapped_column(String(500), nullable=True)  # Full address
 
     # Relationship to files
     files: Mapped[list["ReportFiles"]] = relationship("ReportFiles", back_populates="report",
@@ -164,26 +172,58 @@ def dashboard():
     return render_template("dashboard.html", reports=reports, pending=pending, current_user=current_user)
 
 
+# Add the reverse geocoding route (separate from your existing route)
+@app.route('/reverse_geocode', methods=['POST'])
+def reverse_geocode():
+    """Convert latitude/longitude to readable address"""
+    data = request.get_json()
+    lat = data.get('latitude')
+    lng = data.get('longitude')
+
+    try:
+        # Using OpenStreetMap Nominatim API (free)
+        url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lng}&zoom=18&addressdetails=1"
+        headers = {'User-Agent': 'ReportIssueApp/1.0'}
+
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            data = response.json()
+            address = data.get('display_name', f"{lat}, {lng}")
+            return jsonify({'success': True, 'address': address})
+        else:
+            return jsonify({'success': False, 'address': f"{lat}, {lng}"})
+
+    except Exception as e:
+        return jsonify({'success': False, 'address': f"{lat}, {lng}", 'error': str(e)})
+
+
 @app.route("/report_issue", methods=["GET", "POST"])
 @login_required
 def report_issue():
     if request.method == "POST":
-        # Get form data
+        # Get existing form data
         category = request.form.get("category")
         description = request.form.get("description")
         location = request.form.get("location")
         area = request.form.get("area")
         priority = request.form.get("priority", 'medium')
 
-        # Handle multiple file uploads
+        # Enhanced location data
+        latitude = request.form.get("latitude")
+        longitude = request.form.get("longitude")
+        place_id = request.form.get("place_id")
+        formatted_address = request.form.get("formatted_address")
+
+        # Handle multiple file uploads (unchanged)
         uploaded_files = request.files.getlist("file")
 
-        # Validate required fields
+        # Validate required fields (unchanged)
         if not all([category, description, location, area]):
             flash("Please fill in all required fields.")
             return redirect(url_for("report_issue"))
 
-        # Process and validate files
+        # File validation (unchanged - your existing code)
         valid_files = []
         if uploaded_files:
             allowed_extensions = {
@@ -230,20 +270,26 @@ def report_issue():
                     })
 
         try:
-            # Create new report
+            # Create new report with enhanced location data
             new_report = Reports(
                 category=category,
                 description=description,
                 location=location,
                 area=area,
                 priority=priority,
-                user_id=current_user.id
+                user_id=current_user.id,
+
+                # Location data
+                latitude=float(latitude) if latitude else None,
+                longitude=float(longitude) if longitude else None,
+                place_id=place_id if place_id else None,
+                formatted_address=formatted_address if formatted_address else None
             )
 
             db.session.add(new_report)
             db.session.flush()  # This assigns an ID to new_report without committing
 
-            # Add files if any exist
+            # Add files if any exist (unchanged)
             for file_info in valid_files:
                 file_record = ReportFiles(
                     report_id=new_report.id,
@@ -256,10 +302,11 @@ def report_issue():
 
             db.session.commit()
 
-            if valid_files:
-                flash(f"Report successfully submitted with {len(valid_files)} file(s).")
-            else:
-                flash("Report successfully submitted.")
+            # Enhanced success message
+            location_source = "with precise location data" if latitude and longitude else ""
+            file_count = f"and {len(valid_files)} file(s)" if valid_files else ""
+
+            flash(f"Report successfully submitted {location_source} {file_count}.".strip())
 
         except Exception as e:
             db.session.rollback()

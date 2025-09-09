@@ -1,22 +1,176 @@
 {% extends "base.html" %}
 
-
-<!-- Google Maps JavaScript API -->
-<script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&libraries=geometry&callback=initMap"></script>
-
-
 {% block content %}
+<style>
+    .location-container {
+        position: relative;
+        margin-bottom: 15px;
+    }
+    
+    .location-input-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    
+    .location-input {
+        flex: 1;
+        padding-right: 50px; /* Space for GPS button */
+    }
+    
+    .gps-trigger {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        color: white;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        z-index: 5;
+        transition: all 0.2s ease;
+    }
+    
+    .gps-trigger:hover {
+        transform: translateY(-50%) scale(1.05);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .gps-trigger:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: translateY(-50%);
+    }
+    
+    .location-details {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #6c757d;
+        display: none;
+    }
+    
+    .accuracy-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .accuracy-badge {
+        background: #28a745;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    .accuracy-badge.medium {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .accuracy-badge.low {
+        background: #dc3545;
+    }
+    
+    .location-status {
+        margin: 10px 0;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        display: none;
+        border-left: 4px solid;
+    }
+    
+    .status-loading {
+        background: #fff3cd;
+        color: #856404;
+        border-color: #ffc107;
+    }
+    
+    .status-success {
+        background: #d4edda;
+        color: #155724;
+        border-color: #28a745;
+    }
+    
+    .status-error {
+        background: #f8d7da;
+        color: #721c24;
+        border-color: #dc3545;
+    }
+    
+    /* Autocomplete styling */
+    .pac-container {
+        border-radius: 6px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        border: 1px solid #e9ecef;
+        margin-top: 2px;
+    }
+    
+    .pac-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f3f4;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .pac-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .pac-item-selected {
+        background-color: #e3f2fd;
+    }
+    
+    .pac-matched {
+        font-weight: 600;
+        color: #1976d2;
+    }
+    
+    .clear-location {
+        position: absolute;
+        right: 55px; /* Next to GPS button */
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 4px;
+        z-index: 5;
+        display: none;
+    }
+    
+    .clear-location:hover {
+        color: #dc3545;
+    }
+    
+    .location-input:not(:placeholder-shown) ~ .clear-location {
+        display: block;
+    }
+</style>
+
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8">
-            <div
-                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-2">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-2">
                 <div class="w-100">
                     <h1 class="h2">Report an Issue</h1>
                     <p class="text-muted">Help improve your community by reporting issues</p>
                 </div>
             </div>
+            
             {% with messages = get_flashed_messages() %}
             {% if messages %}
             {% for message in messages %}
@@ -24,8 +178,8 @@
             {% endfor %}
             {% endif %}
             {% endwith %}
-            <form class="needs-validation" action="{{ url_for('report_issue') }}" method="post"
-                enctype="multipart/form-data">
+            
+            <form id="reportForm" class="needs-validation" action="{{ url_for('report_issue') }}" method="post" enctype="multipart/form-data">
                 <div class="row g-3">
                     <div class="col-12">
                         <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
@@ -47,11 +201,60 @@
 
                     <div class="col-12">
                         <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
-                        <input name="location" type="text" class="form-control" id="location"
-                            placeholder="Street address or landmark" required>
+                        
+                        <!-- Status message -->
+                        <div id="locationStatus" class="location-status"></div>
+                        
+                        <div class="location-container">
+                            <div class="location-input-group">
+                                <input name="location" 
+                                       type="text" 
+                                       class="form-control location-input" 
+                                       id="location"
+                                       placeholder="Start typing an address..." 
+                                       autocomplete="off"
+                                       required>
+                                
+                                <!-- Clear button -->
+                                <button type="button" class="clear-location" id="clearLocationBtn" title="Clear location">
+                                    ✕
+                                </button>
+                                
+                                <!-- GPS button -->
+                                <button type="button" class="gps-trigger" id="gpsBtn" title="Use my current location">
+                                    📍 GPS
+                                </button>
+                            </div>
+                            
+                            <!-- Location details -->
+                            <div id="locationDetails" class="location-details">
+                                <div class="accuracy-info">
+                                    <div>
+                                        <strong>📍 Coordinates:</strong> <span id="coordinates">--</span>
+                                    </div>
+                                    <div id="accuracyBadge" class="accuracy-badge" style="display: none;">
+                                        High Precision
+                                    </div>
+                                </div>
+                                <div style="margin-top: 5px;">
+                                    <strong>🗺️ Full Address:</strong> <span id="fullAddress">--</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-text">
+                            💡 Start typing to see suggestions, or click GPS for your exact location
+                        </div>
+                        
                         <div class="invalid-feedback">
                             Please enter the location of the issue.
                         </div>
+                        
+                        <!-- Hidden fields for coordinates and place details -->
+                        <input type="hidden" id="latitude" name="latitude">
+                        <input type="hidden" id="longitude" name="longitude">
+                        <input type="hidden" id="placeId" name="place_id">
+                        <input type="hidden" id="formattedAddress" name="formatted_address">
                     </div>
 
                     <div class="col-md-6">
@@ -82,8 +285,7 @@
                     </div>
 
                     <div class="col-12">
-                        <label for="description" class="form-label">Detailed Description <span
-                                class="text-danger">*</span></label>
+                        <label for="description" class="form-label">Detailed Description <span class="text-danger">*</span></label>
                         <textarea name="description" class="form-control" id="description" rows="4"
                             placeholder="Please provide a detailed description of the issue..." required></textarea>
                         <div class="invalid-feedback">
@@ -92,12 +294,9 @@
                     </div>
 
                     <div class="col-12">
-                        <label for="imageUpload" class="form-label">Upload Images/Videos <span
-                                class="text-muted">(Optional)</span></label>
-                        <input name="file" type="file" class="form-control" id="imageUpload" multiple
-                            accept="image/*,video/*">
-                        <div class="form-text">You can upload up to 5 images (JPG, PNG, GIF) or videos (MP4, AVI, MOV)
-                            up to 10MB each.</div>
+                        <label for="imageUpload" class="form-label">Upload Images/Videos <span class="text-muted">(Optional)</span></label>
+                        <input name="file" type="file" class="form-control" id="imageUpload" multiple accept="image/*,video/*">
+                        <div class="form-text">You can upload up to 5 images (JPG, PNG, GIF) or videos (MP4, AVI, MOV) up to 10MB each.</div>
                     </div>
                 </div>
 
@@ -110,5 +309,256 @@
         </div>
     </div>
 </div>
+
+<!-- Google Places API -->
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initAutocomplete">
+</script>
+
+<script>
+let autocomplete;
+let selectedPlace = null;
+
+// Initialize Google Places Autocomplete
+function initAutocomplete() {
+    const locationInput = document.getElementById('location');
+    
+    // Create autocomplete object with Lagos bias
+    autocomplete = new google.maps.places.Autocomplete(locationInput, {
+        types: ['address'],
+        componentRestrictions: { country: 'ng' }, // Nigeria
+        bounds: new google.maps.LatLngBounds(
+            new google.maps.LatLng(6.4474, 3.3903), // Lagos Southwest
+            new google.maps.LatLng(6.6269, 3.6004)  // Lagos Northeast
+        ),
+        strictBounds: false,
+        fields: ['place_id', 'formatted_address', 'geometry', 'address_components', 'name']
+    });
+
+    // Listen for place selection
+    autocomplete.addListener('place_changed', onPlaceSelected);
+    
+    // Initialize other functionality
+    initLocationFeatures();
+}
+
+// Handle place selection from autocomplete
+function onPlaceSelected() {
+    selectedPlace = autocomplete.getPlace();
+    
+    if (!selectedPlace.geometry) {
+        showStatus('❌ Invalid location selected. Please choose from the suggestions.', 'error');
+        return;
+    }
+    
+    const lat = selectedPlace.geometry.location.lat();
+    const lng = selectedPlace.geometry.location.lng();
+    
+    // Update hidden fields
+    updateLocationData(
+        lat,
+        lng,
+        selectedPlace.formatted_address,
+        selectedPlace.place_id,
+        'autocomplete'
+    );
+    
+    showStatus('✅ Location selected from suggestions', 'success');
+}
+
+// Initialize other location features
+function initLocationFeatures() {
+    const gpsBtn = document.getElementById('gpsBtn');
+    const clearBtn = document.getElementById('clearLocationBtn');
+    const locationInput = document.getElementById('location');
+    
+    if (gpsBtn) {
+        gpsBtn.addEventListener('click', getCurrentLocation);
+    }
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearLocation);
+    }
+    
+    // Show clear button when input has value
+    locationInput.addEventListener('input', function() {
+        const clearBtn = document.getElementById('clearLocationBtn');
+        if (this.value.trim()) {
+            clearBtn.style.display = 'block';
+        } else {
+            clearBtn.style.display = 'none';
+        }
+    });
+}
+
+// Get current GPS location
+function getCurrentLocation() {
+    if (!navigator.geolocation) {
+        showStatus('❌ GPS is not supported by this browser', 'error');
+        return;
+    }
+
+    const gpsBtn = document.getElementById('gpsBtn');
+    showStatus('📍 Getting your current location...', 'loading');
+    gpsBtn.disabled = true;
+    gpsBtn.innerHTML = '⏳';
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            
+            // Use geocoding to get address
+            reverseGeocode(lat, lng, accuracy);
+        },
+        function(error) {
+            let errorMessage = '❌ ';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage += 'Location access denied. Please enable location permissions.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage += 'Location unavailable. Please try typing the address.';
+                    break;
+                case error.TIMEOUT:
+                    errorMessage += 'GPS timeout. Please try typing the address.';
+                    break;
+                default:
+                    errorMessage += 'GPS error. Please try typing the address.';
+                    break;
+            }
+            showStatus(errorMessage, 'error');
+            resetGpsButton();
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 300000 // 5 minutes
+        }
+    );
+}
+
+// Convert GPS coordinates to address
+async function reverseGeocode(lat, lng, accuracy = null) {
+    try {
+        const response = await fetch('/reverse_geocode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                latitude: lat,
+                longitude: lng
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('location').value = data.address;
+            updateLocationData(lat, lng, data.address, null, 'gps', accuracy);
+            showStatus('✅ Current location detected successfully!', 'success');
+        } else {
+            document.getElementById('location').value = `${lat}, ${lng}`;
+            updateLocationData(lat, lng, `${lat}, ${lng}`, null, 'gps', accuracy);
+            showStatus('⚠️ Using GPS coordinates (address lookup failed)', 'error');
+        }
+    } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        document.getElementById('location').value = `${lat}, ${lng}`;
+        updateLocationData(lat, lng, `${lat}, ${lng}`, null, 'gps', accuracy);
+        showStatus('⚠️ Using GPS coordinates only', 'error');
+    }
+    
+    resetGpsButton();
+}
+
+// Update all location-related data
+function updateLocationData(lat, lng, address, placeId = null, source = 'unknown', accuracy = null) {
+    // Update hidden fields
+    document.getElementById('latitude').value = lat;
+    document.getElementById('longitude').value = lng;
+    document.getElementById('formattedAddress').value = address;
+    
+    if (placeId) {
+        document.getElementById('placeId').value = placeId;
+    }
+    
+    // Update location details display
+    const locationDetails = document.getElementById('locationDetails');
+    const coordinates = document.getElementById('coordinates');
+    const fullAddress = document.getElementById('fullAddress');
+    const accuracyBadge = document.getElementById('accuracyBadge');
+    
+    coordinates.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    fullAddress.textContent = address;
+    
+    // Show accuracy for GPS
+    if (source === 'gps' && accuracy) {
+        accuracyBadge.style.display = 'inline-block';
+        if (accuracy <= 10) {
+            accuracyBadge.textContent = 'High Precision';
+            accuracyBadge.className = 'accuracy-badge';
+        } else if (accuracy <= 50) {
+            accuracyBadge.textContent = 'Medium Precision';
+            accuracyBadge.className = 'accuracy-badge medium';
+        } else {
+            accuracyBadge.textContent = 'Low Precision';
+            accuracyBadge.className = 'accuracy-badge low';
+        }
+    } else {
+        accuracyBadge.style.display = 'none';
+    }
+    
+    locationDetails.style.display = 'block';
+}
+
+// Clear all location data
+function clearLocation() {
+    document.getElementById('location').value = '';
+    document.getElementById('latitude').value = '';
+    document.getElementById('longitude').value = '';
+    document.getElementById('placeId').value = '';
+    document.getElementById('formattedAddress').value = '';
+    document.getElementById('locationDetails').style.display = 'none';
+    document.getElementById('clearLocationBtn').style.display = 'none';
+    selectedPlace = null;
+    hideStatus();
+}
+
+// Reset GPS button
+function resetGpsButton() {
+    const gpsBtn = document.getElementById('gpsBtn');
+    gpsBtn.disabled = false;
+    gpsBtn.innerHTML = '📍 GPS';
+}
+
+// Show status messages
+function showStatus(message, type = 'loading') {
+    const statusDiv = document.getElementById('locationStatus');
+    statusDiv.innerHTML = message;
+    statusDiv.className = `location-status status-${type}`;
+    statusDiv.style.display = 'block';
+    
+    if (type === 'success' || type === 'error') {
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 4000);
+    }
+}
+
+// Hide status
+function hideStatus() {
+    const statusDiv = document.getElementById('locationStatus');
+    statusDiv.style.display = 'none';
+}
+
+// Handle API loading errors
+window.gm_authFailure = function() {
+    showStatus('❌ Maps API error. Please type the address manually.', 'error');
+    console.error('Google Maps API authentication failed');
+};
+</script>
 
 {% endblock %}
