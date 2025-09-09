@@ -138,7 +138,10 @@ def login():
         if user:
             if check_password_hash(user.password, request.form.get("password")):
                 login_user(user)
-                return redirect(url_for("dashboard"))
+                if user.id == 1:
+                    return redirect(url_for("admin_dashboard"))
+                else:
+                    return redirect(url_for("dashboard"))
             else:
                 flash("Incorrect password, please try again.")
                 return redirect(url_for("login"))
@@ -421,6 +424,10 @@ def edit_profile():
                 'success': False,
                 'message': f'An error occurred while updating profile: {str(e)}'
             }), 500
+
+@app.route("/admin")
+def admin_dashboard():
+    return render_template("admin.html")
 
 @app.route("/change_password", methods=["GET", "POST"])
 def change_password():
