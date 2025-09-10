@@ -38,15 +38,15 @@
 <!-- Card Dashboard Content -->
 <div class="dashboard-cards mb-3">
     <div class="card-metric card-total">
-        <div class="metric-number text-dark">{{ reports|length }}</div>
+        <div class="metric-number text-dark">{{ all_reports|length }}</div>
         <div class="metric-label">Total Reports</div>
     </div>
     <div class="card-metric card-pending">
-        <div class="metric-number text-warning">{{ progress|length }}</div>
+        <div class="metric-number text-warning">{{ in_progress_reports|length }}</div>
         <div class="metric-label">Progress</div>
     </div>
     <div class="card-metric card-resolved">
-        <div class="metric-number text-success">{{ resolved|length }}</div>
+        <div class="metric-number text-success">{{ resolved_reports|length }}</div>
         <div class="metric-label">Resolved</div>
     </div>
 </div>

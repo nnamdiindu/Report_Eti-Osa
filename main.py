@@ -294,8 +294,34 @@ def get_file(file_id):
 @login_required
 def user_reports():
     """Display current user's reports with files"""
-
     selected_category = None  # Default for GET requests
+    # GET request - show all reports
+    all_reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.user_id == current_user.id)
+        .order_by(Reports.created_at.desc())
+    ).scalars().all()
+
+    pending_reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.user_id == current_user.id)
+        .where(Reports.status == "pending")
+        .order_by(Reports.created_at.desc())
+    ).scalars().all()
+
+    resolved_reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.user_id == current_user.id)
+        .where(Reports.status == "resolved")
+        .order_by(Reports.created_at.desc())
+    ).scalars().all()
+
+    in_progress_reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.user_id == current_user.id)
+        .where(Reports.status == "progress")
+        .order_by(Reports.created_at.desc())
+    ).scalars().all()
 
     if request.method == "POST":
         work_category = request.form.get("category")
@@ -316,17 +342,15 @@ def user_reports():
                 .where(Reports.user_id == current_user.id)
                 .order_by(Reports.created_at.desc())
             ).scalars().all()
-    else:
-        # GET request - show all reports
-        reports = db.session.execute(
-            db.select(Reports)
-            .where(Reports.user_id == current_user.id)
-            .order_by(Reports.created_at.desc())
-        ).scalars().all()
+
 
     return render_template("user_report.html",
                            current_user=current_user,
                            reports=reports,
+                           all_reports=all_reports,
+                           in_progress_reports=in_progress_reports,
+                           resolved_reports=resolved_reports,
+                           pending_reports=pending_reports,
                            selected_category=selected_category)
 
 @app.route("/profile")
