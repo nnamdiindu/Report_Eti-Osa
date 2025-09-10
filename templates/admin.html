@@ -258,7 +258,7 @@
                                         {{ report.category|title }}
                                     </span></td>
                                 <td>{{ report.area|title }}</td>
-                                <td>{{ report.user_id.full_name }}</td>
+                                <td>{{ report.user.full_name }}</td>
                                 <td><span
                                         class="badge priority-{{ 'medium' if report.priority == 'medium' else 'low' if report.priority == 'low' else 'high'}}">
                                         {{ report.priority|title }}
