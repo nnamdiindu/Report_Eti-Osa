@@ -181,7 +181,7 @@
                     </div>
                     <div class="activity-item">
                         <span class="activity-label">Success Rate</span>
-                        <span class="activity-value">{{ resolved_reports|length/reports|length * 100}}%</span>
+                        <span class="activity-value">{{ (resolved_reports|length/reports|length * 100)|round(2, 'floor')}}%</span>
                     </div>
                 </div>
             </div>

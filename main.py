@@ -111,6 +111,8 @@ def get_report_sender(report_id):
         return report.user
     return None
 
+def view_report():
+    pass
 
 
 @app.route("/")
@@ -462,7 +464,6 @@ def admin_dashboard():
 
     progress = get_specific_status_reports("progress")
 
-    # get_report_sender(report_id)
     return render_template("admin.html", all_reports=all_reports, pending=pending,
                            resolved=resolved, progress=progress)
 
