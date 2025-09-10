@@ -104,6 +104,9 @@ def get_specific_status_reports(status):
     ).scalars().all()
     return specific_reports
 
+@app.route("/edit_admin")
+def edit_admin():
+    return render_template("admin-edit-page.html")
 
 @app.route("/")
 def index():
