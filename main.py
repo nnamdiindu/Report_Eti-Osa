@@ -104,9 +104,9 @@ def get_specific_status_reports(status):
     ).scalars().all()
     return specific_reports
 
-@app.route("/edit_admin")
-def edit_admin():
-    return render_template("admin-edit-page.html")
+# @app.route("/edit_admin")
+# def edit_admin():
+#     return render_template("admin-edit-page.html")
 
 @app.route("/")
 def index():
@@ -369,7 +369,7 @@ def profile():
                            resolved_reports=resolved_reports, current_user=current_user)
 
 @app.route("/edit_profile", methods=["POST"])
-@login_required  # Add this decorator since you're using current_user
+@login_required 
 def edit_profile():
     if request.method == "POST":
         try:
@@ -419,7 +419,7 @@ def edit_profile():
                 }), 400
 
             # Update current user's fields
-            current_user.full_name = full_name  # Make sure this matches your User model field name
+            current_user.full_name = full_name
             current_user.email = email
             current_user.phone = phone
             current_user.address = address
@@ -448,6 +448,7 @@ def edit_profile():
             }), 500
 
 @app.route("/admin", methods=["GET", "POST"])
+@login_required
 def admin_dashboard():
     all_reports = get_all_reports()
 
@@ -459,6 +460,21 @@ def admin_dashboard():
 
     return render_template("admin.html", all_reports=all_reports, pending=pending,
                            resolved=resolved, progress=progress)
+
+@app.route('/update_report', methods=['POST'])
+def update_report():
+    if request.method == "POST":
+        data = request.get_json()
+        # Your update logic here
+        print(data)
+
+    return jsonify({'status': 'success'})
+
+@app.route('/assign_report', methods=['POST'])
+def assign_report():
+    data = request.get_json()
+    # Your assignment logic here
+    return jsonify({'status': 'success'})
 
 @app.route("/change_password", methods=["GET", "POST"])
 def change_password():
