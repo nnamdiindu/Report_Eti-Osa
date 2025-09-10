@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Management Interfaces</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .demo-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .demo-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-secondary { background: #6b7280; color: white; }
+        .btn-secondary:hover { background: #4b5563; }
+        .btn-outline { border: 1px solid #d1d5db; background: white; color: #374151; }
+        .btn-outline:hover { background: #f9fafb; }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .modal-close:hover {
+            background: #f3f4f6;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .grid-cols-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-yellow { background: #fef3c7; color: #92400e; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            transition: width 0.3s;
+        }
+        
+        .info-card {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+        .alert-warning { background: #fffbeb; border: 1px solid #fed7aa; color: #92400e; }
+        .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        
+        .team-option {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.5rem;
+        }
+        
+        .team-option:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+        
+        .team-option.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .workload {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .workload.high { color: #dc2626; }
+        .workload.medium { color: #d97706; }
+        .workload.low { color: #059669; }
+        
+        @media (max-width: 768px) {
+            .grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .demo-buttons {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                margin: 1rem;
+                max-height: calc(100vh - 2rem);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-section">
+            <h1 style="text-align: center; margin-bottom: 2rem; color: #1f2937;">Flask Report Management Interfaces</h1>
+            
+            <!-- Sample Report Row (mimicking your table) -->
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1rem; margin-bottom: 2rem; border: 1px solid #e5e7eb;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; align-items: center; font-size: 0.9rem;">
+                    <div><strong>#202509-9</strong><br>Hazardous Substances Emerging From The Sewages</div>
+                    <div>
+                        <span class="badge badge-green">Environmental</span><br>
+                        <small style="color: #6b7280;">Banana-Island</small>
+                    </div>
+                    <div>
+                        <span class="badge badge-yellow">Medium Priority</span><br>
+                        <span class="badge badge-blue">Pending</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary btn-sm" onclick="openModal('viewModal')">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="btn btn-success btn-sm" onclick="openModal('updateModal')">
+                            <i class="fas fa-edit"></i> Update
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="openModal('assignModal')">
+                            <i class="fas fa-user-plus"></i> Assign
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="demo-buttons">
+                <button class="btn btn-primary" onclick="openModal('viewModal')">
+                    <i class="fas fa-eye"></i> View Interface
+                </button>
+                <button class="btn btn-success" onclick="openModal('updateModal')">
+                    <i class="fas fa-edit"></i> Update Interface
+                </button>
+                <button class="btn btn-warning" onclick="openModal('assignModal')">
+                    <i class="fas fa-user-plus"></i> Assign Interface
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Report Details</h2>
+                <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>Report ID:</strong> #202509-9<br>
+                        <strong>Status:</strong> <span class="badge badge-blue">Pending</span>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 1rem; color: #1f2937;">Hazardous Substances Emerging From The Sewages</h3>
+                
+                <div class="grid grid-cols-2">
+                    <div class="info-card">
+                        <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-map-marker-alt"></i> Location</h4>
+                        <p>Banana-Island</p>
+                        <p style="font-size: 0.8rem; color: #6b7280;">6.4474° N, 3.4478° E</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-calendar"></i> Date Reported</h4>
+                        <p>September 10, 2025</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-user"></i> Reporter</h4>
+                        <p>Angela Odi</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-users"></i> Assigned Team</h4>
+                        <p>Road Team A</p>
+                    </div>
+                </div>
+                
+                <div style="margin: 1.5rem 0;">
+                    <h4 style="margin-bottom: 0.5rem;">Progress (65%)</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 65%;"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 style="margin-bottom: 0.5rem;">Description</h4>
+                    <p style="color: #4b5563; line-height: 1.6;">
+                        Residents in the Banana-Island area have reported the emergence of hazardous substances from local sewage systems. 
+                        The substances appear to be chemical in nature and are causing environmental concerns. 
+                        Immediate investigation and remediation are required to prevent further contamination.
+                    </p>
+                </div>
+                
+                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; gap: 1rem;">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-download"></i> Download Report
+                    </button>
+                    <button class="btn btn-outline">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button class="btn btn-success">
+                        <i class="fas fa-check"></i> Mark Resolved
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Modal -->
+    <div id="updateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Update Report</h2>
+                <button class="modal-close" onclick="closeModal('updateModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-edit"></i>
+                    <div><strong>Editing Report #202509-9</strong></div>
+                </div>
+                
+                <form id="updateForm">
+                    <div class="grid grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-control" value="Hazardous Substances Emerging From The Sewages" name="title">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Priority</label>
+                            <select class="form-control" name="priority">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select class="form-control" name="status">
+                                <option value="Pending" selected>Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Resolved">Resolved</option>
+                                <option value="Closed">Closed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Assigned Team</label>
+                            <select class="form-control" name="assigned_to">
+                                <option value="Road Team A" selected>Road Team A</option>
+                                <option value="Environmental Team B">Environmental Team B</option>
+                                <option value="Emergency Response">Emergency Response</option>
+                                <option value="Public Health Unit">Public Health Unit</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Progress (<span id="progressValue">65</span>%)</label>
+                        <input type="range" min="0" max="100" value="65" class="form-control" 
+                               style="height: 40px;" oninput="updateProgress(this.value)" name="progress">
+                        <div class="progress-bar" style="margin-top: 0.5rem;">
+                            <div id="progressBar" class="progress-fill" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" rows="4" name="description">Residents in the Banana-Island area have reported the emergence of hazardous substances from local sewage systems. The substances appear to be chemical in nature and are causing environmental concerns. Immediate investigation and remediation are required to prevent further contamination.</textarea>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <strong>Update Notice</strong><br>
+                            Changes will be logged and team members will be notified automatically.
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <button type="button" class="btn btn-secondary">
+                            <i class="fas fa-file"></i> Save as Draft
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="closeModal('updateModal')">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Modal -->
+    <div id="assignModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Assign Report</h2>
+                <button class="modal-close" onclick="closeModal('assignModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-user-plus"></i>
+                    <div>
+                        <strong>Assigning Report #202509-9</strong><br>
+                        Hazardous Substances Emerging From The Sewages
+                    </div>
+                </div>
+                
+                <form id="assignForm">
+                    <div class="grid grid-cols-2">
+                        <div>
+                            <h4 style="margin-bottom: 1rem;">Select Team</h4>
+                            <div class="team-option selected" onclick="selectTeam(this, 'road_team_a')">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-weight: 500;">Road Team A</div>
+                                        <div style="color: #6b7280; font-size: 0.875rem;">Infrastructure</div>
+                                    </div>
+                                    <div class="workload high">85% workload</div>
+                                </div>
+                            </div>
+                            
+                            <div class="team-option" onclick="selectTeam(this, 'env_team_b')">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-weight: 500;">Environmental Team B</div>
+                                        <div style="color: #6b7280; font-size: 0.875rem;">Environmental</div>
+                                    </div>
+                                    <div class="workload medium">62% workload</div>
+                                </div>
+                            </div>
+                            
+                            <div class="team-option" onclick="selectTeam(this, 'emergency')">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="font-weight: 500;">Emergency Response</div>
+                                        <div style="color: #6b7280; font-size: 0.875rem;">Emergency</div>
+                                    </div>
+                                    <div class="workload low">45% workload</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="form-group">
+                                <label class="form-label">Priority Level</label>
+                                <select class="form-control" name="priority">
+                                    <option value="Low">Low Priority</option>
+                                    <option value="Medium" selected="selected">Medium Priority</option>
+                                    <option value="High">High Priority</option>
+                                    <option value="Critical">Critical Priority</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Deadline</label>
+                                <input type="date" class="form-control" value="2025-09-20" name="deadline">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Assignment Notes</label>
+                                <textarea class="form-control" rows="3" placeholder="Add specific instructions..." name="notes"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>Auto-Notifications Enabled</strong><br>
+                            The assigned team will receive email and in-app notifications.
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Assign Report
+                        </button>
+                        <button type="button" class="btn btn-secondary">
+                            <i class="fas fa-clock"></i> Schedule Assignment
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="closeModal('assignModal')">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        function updateProgress(value) {
+            document.getElementById('progressValue').textContent = value;
+            document.getElementById('progressBar').style.width = value + '%';
+        }
+        
+        function selectTeam(element, teamId) {
+            // Remove selected class from all team options
+            document.querySelectorAll('.team-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            element.classList.add('selected');
+            
+            // You can store the selected team ID in a hidden input or variable
+            console.log('Selected team:', teamId);
+        }
+        
+        // Close modals when clicking outside
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+        
+        // Handle form submissions (you'll connect these to your Flask routes)
+        document.getElementById('updateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Collect form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            console.log('Update form data:', data);
+            
+            // In your Flask app, you'd send this to your update route:
+            // fetch('/update_report', {
+            //     method: 'POST',
+            //     headers: {'Content-Type': 'application/json'},
+            //     body: JSON.stringify(data)
+            // });
+            
+            alert('Update functionality - connect to your Flask route!');
+        });
+        
+        document.getElementById('assignForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            console.log('Assign form data:', data);
+            
+            // Connect to your Flask assign route
+            alert('Assign functionality - connect to your Flask route!');
+        });
+    </script>
+</body>
+</html>
