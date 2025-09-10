@@ -23,15 +23,15 @@
         <div class="metric-label">Total Reports</div>
     </div>
     <div class="card-metric card-pending">
-        <div class="metric-number text-warning">{{ pending|length }}</div>
+        <div class="metric-number text-warning">{{ pending_reports|length }}</div>
         <div class="metric-label">Pending Issues</div>
     </div>
     <div class="card-metric card-resolved">
-        <div class="metric-number text-success">0</div>
+        <div class="metric-number text-success">{{ resolved_reports|length }}</div>
         <div class="metric-label">Resolved Issues</div>
     </div>
     <div class="card-metric card-progress">
-        <div class="metric-number">0</div>
+        <div class="metric-number">{{ in_progress_reports|length }}</div>
         <div class="metric-label">In Progress</div>
     </div>
 </div>
@@ -58,7 +58,10 @@
                     <td>{{ report.category|title }}</td>
                     <td>{{ report.description|title }}</td>
                     <td>{{ report.area|title }}</td>
-                    <td><span class="badge bg-warning">Pending</span></td>
+                    <td><span
+                class="badge bg-{{ 'success' if report.status == 'resolved' else 'warning' if report.status == 'pending' else 'primary' if report.status == 'progress' else 'secondary' }}">
+                {{ report.status|title }}
+            </span></td>
                     <td>{{ report.created_at.strftime('%B %d, %Y at %I:%M %p') }}</td>
                 </tr>
                 {% endfor %}

@@ -1,6 +1,4 @@
 {% extends "base.html" %}
-{% block title %}My Reports{% endblock %}
-
 {% block content %}
 <!-- Main Content -->
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-2">
@@ -58,7 +56,7 @@
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">{{ report.category|title }} Issue
                 <span
-                class="badge bg-{{ 'success' if report.status == 'resolved' else 'warning' if report.status == 'in_progress' else 'secondary' }}">
+                class="badge bg-{{ 'success' if report.status == 'resolved' else 'warning' if report.status == 'pending' else 'primary' if report.status == 'progress' else 'secondary' }}">
                 {{ report.status|title }}
             </span>
             </h5>

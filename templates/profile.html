@@ -173,7 +173,7 @@
                     </div>
                     <div class="activity-item">
                         <span class="activity-label">Issues Resolved</span>
-                        <span class="activity-value">0</span>
+                        <span class="activity-value">{{ resolved_reports|length }}</span>
                     </div>
                     <div class="activity-item">
                         <span class="activity-label">Community Points</span>
@@ -181,7 +181,7 @@
                     </div>
                     <div class="activity-item">
                         <span class="activity-label">Success Rate</span>
-                        <span class="activity-value">0%</span>
+                        <span class="activity-value">{{ resolved_reports|length/reports|length * 100}}%</span>
                     </div>
                 </div>
             </div>

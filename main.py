@@ -160,11 +160,32 @@ def dashboard():
     ).scalars().all()
 
     """Display current user's pending reports"""
-    pending = db.session.execute(
-        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.status)
+    pending_reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.user_id == current_user.id)
+        .where(Reports.status == "pending")
+        .order_by(Reports.created_at.desc())
     ).scalars().all()
 
-    return render_template("dashboard.html", reports=reports, pending=pending, current_user=current_user)
+    """Display current user's resolved reports"""
+    resolved_reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.user_id == current_user.id)
+        .where(Reports.status == "resolved")
+        .order_by(Reports.created_at.desc())
+    ).scalars().all()
+
+    """Display current user's in_progress reports"""
+    in_progress_reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.user_id == current_user.id)
+        .where(Reports.status == "progress")
+        .order_by(Reports.created_at.desc())
+    ).scalars().all()
+
+    return render_template("dashboard.html", reports=reports, pending_reports=pending_reports,
+                           resolved_reports=resolved_reports, in_progress_reports=in_progress_reports,
+                           current_user=current_user)
 
 
 @app.route("/report_issue", methods=["GET", "POST"])
@@ -295,6 +316,12 @@ def get_file(file_id):
 def user_reports():
     """Display current user's reports with files"""
     selected_category = None  # Default for GET requests
+    reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.user_id == current_user.id)
+        .order_by(Reports.created_at.desc())
+    ).scalars().all()
+
     # GET request - show all reports
     all_reports = db.session.execute(
         db.select(Reports)
@@ -368,7 +395,16 @@ def profile():
     .where(Reports.status == 'pending')
     .order_by(Reports.status)
 ).scalars().all()
-    return render_template("profile.html", reports=reports, pending=pending, current_user=current_user)
+
+    resolved_reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.user_id == current_user.id)
+        .where(Reports.status == "resolved")
+        .order_by(Reports.created_at.desc())
+    ).scalars().all()
+
+    return render_template("profile.html", reports=reports, pending=pending,
+                           resolved_reports=resolved_reports, current_user=current_user)
 
 @app.route("/edit_profile", methods=["POST"])
 @login_required  # Add this decorator since you're using current_user
