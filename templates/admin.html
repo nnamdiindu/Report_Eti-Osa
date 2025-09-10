@@ -282,11 +282,11 @@
                                 <td>{{ report.created_at.strftime("%B %d, %Y") }}</td>
                                 <td class="action-buttons">
                                     <button class="btn btn-sm btn-primary"
-                                        onclick="openModal('viewModal')"><i class="fas fa-eye"></i> View</button>
+                                        onclick="openModal('viewModal-{{ report.id }}')"><i class="fas fa-eye"></i> View</button>
                                     <button class="btn btn-sm btn-success"
-                                        onclick="openModal('updateModal')"><i class="fas fa-edit"></i> Update</button>
+                                        onclick="openModal('updateModal-{{ report.id }}')"><i class="fas fa-edit"></i> Update</button>
                                     <button class="btn btn-sm btn-warning"
-                                        onclick="openModal('assignModal')"><i class="fas fa-user-plus"></i> Assign</button>
+                                        onclick="openModal('assignModal-{{ report.id }}')"><i class="fas fa-user-plus"></i> Assign</button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -297,44 +297,52 @@
             
         </div>
     </div>
+
+
+
+
+    {% for report in all_reports %}
     <!-- View Modal -->
-    <div id="viewModal" class="modal">
+    <div id="viewModal-{{ report.id }}" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Report Details</h2>
-                <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+                <button class="modal-close" onclick="closeModal('viewModal-{{ report.id }}')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i>
                     <div>
-                        <strong>Report ID:</strong> #202509-9<br>
-                        <strong>Status:</strong> <span class="badge badge-blue">Pending</span>
+                        <strong>Report ID:</strong>{{ report.id }}<br>
+                        <strong>Status:</strong> <span
+                                        class="badge status-{{ 'in-progress' if report.status == 'progress' else 'resolved' if report.status == 'resolved' else 'assigned' if report.status == 'assigned' else 'new' if report.status == 'pending'}}">
+                                        {{ report.status|title }}
+                                    </span>
                     </div>
                 </div>
                 
-                <h3 style="margin-bottom: 1rem; color: #1f2937;">Hazardous Substances Emerging From The Sewages</h3>
+                <h3 style="margin-bottom: 1rem; color: #1f2937;">{{ report.category|title }}</h3>
                 
                 <div class="grid grid-cols-2">
                     <div class="info-card">
                         <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-map-marker-alt"></i> Location</h4>
-                        <p>Banana-Island</p>
+                        <p>{{ report.area|title }}</p>
                         <p style="font-size: 0.8rem; color: #6b7280;">6.4474° N, 3.4478° E</p>
                     </div>
                     
                     <div class="info-card">
                         <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-calendar"></i> Date Reported</h4>
-                        <p>September 10, 2025</p>
+                        <p>{{ report.created_at.strftime('%d %B %Y') }}</p>
                     </div>
                     
                     <div class="info-card">
                         <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-user"></i> Reporter</h4>
-                        <p>Angela Odi</p>
+                        <p>{{ report.user.full_name }}</p>
                     </div>
                     
                     <div class="info-card">
                         <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-users"></i> Assigned Team</h4>
-                        <p>Road Team A</p>
+                        <p>NIL</p>
                     </div>
                 </div>
                 
@@ -348,9 +356,7 @@
                 <div>
                     <h4 style="margin-bottom: 0.5rem;">Description</h4>
                     <p style="color: #4b5563; line-height: 1.6;">
-                        Residents in the Banana-Island area have reported the emergence of hazardous substances from local sewage systems. 
-                        The substances appear to be chemical in nature and are causing environmental concerns. 
-                        Immediate investigation and remediation are required to prevent further contamination.
+                        {{ report.description }}
                     </p>
                 </div>
                 
@@ -370,23 +376,23 @@
     </div>
 
     <!-- Update Modal -->
-    <div id="updateModal" class="modal">
+    <div id="updateModal-{{ report.id }}" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Update Report</h2>
-                <button class="modal-close" onclick="closeModal('updateModal')">&times;</button>
+                <button class="modal-close" onclick="closeModal('updateModal-{{ report.id }}')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
                     <i class="fas fa-edit"></i>
-                    <div><strong>Editing Report #202509-9</strong></div>
+                    <div><strong>Editing Report {{ report.id }}</strong></div>
                 </div>
                 
                 <form id="updateForm">
                     <div class="grid grid-cols-2">
                         <div class="form-group">
                             <label class="form-label">Title</label>
-                            <input type="text" class="form-control" value="Hazardous Substances Emerging From The Sewages" name="title">
+                            <input type="text" class="form-control" value="{{ report.category }}" name="title">
                         </div>
                         
                         <div class="form-group">
@@ -431,7 +437,7 @@
                     
                     <div class="form-group">
                         <label class="form-label">Description</label>
-                        <textarea class="form-control" rows="4" name="description">Residents in the Banana-Island area have reported the emergence of hazardous substances from local sewage systems. The substances appear to be chemical in nature and are causing environmental concerns. Immediate investigation and remediation are required to prevent further contamination.</textarea>
+                        <textarea class="form-control" rows="4" name="description">{{ report.description }}</textarea>
                     </div>
                     
                     <div class="alert alert-warning">
@@ -459,18 +465,18 @@
     </div>
 
     <!-- Assign Modal -->
-    <div id="assignModal" class="modal">
+    <div id="assignModal-{{ report.id }}" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Assign Report</h2>
-                <button class="modal-close" onclick="closeModal('assignModal')">&times;</button>
+                <button class="modal-close" onclick="closeModal('assignModal-{{ report.id }}')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
                     <i class="fas fa-user-plus"></i>
                     <div>
-                        <strong>Assigning Report #202509-9</strong><br>
-                        Hazardous Substances Emerging From The Sewages
+                        <strong>Assigning Report {{ report.id }}</strong><br>
+                        {{ report.category }}
                     </div>
                 </div>
                 
@@ -555,7 +561,7 @@
             </div>
         </div>
     </div>
-
+    {% endfor %}
     <script>
         function openModal(modalId) {
             document.getElementById(modalId).classList.add('active');
@@ -603,11 +609,11 @@
             console.log('Update form data:', data);
             
             // In your Flask app, you'd send this to your update route:
-            // fetch('/update_report', {
-            //     method: 'POST',
-            //     headers: {'Content-Type': 'application/json'},
-            //     body: JSON.stringify(data)
-            // });
+            fetch('/update_report', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
             
             alert('Update functionality - connect to your Flask route!');
         });
