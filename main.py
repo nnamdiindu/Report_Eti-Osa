@@ -425,9 +425,31 @@ def edit_profile():
                 'message': f'An error occurred while updating profile: {str(e)}'
             }), 500
 
-@app.route("/admin")
+@app.route("/admin", methods=["GET", "POST"])
 def admin_dashboard():
-    return render_template("admin.html")
+    reports = db.session.execute(
+        db.select(Reports).order_by(Reports.created_at.desc())
+    ).scalars().all()
+
+    pending = db.session.execute(
+        db.select(Reports)
+        .where(Reports.status == 'pending')
+        .order_by(Reports.status)
+    ).scalars().all()
+
+    resolved = db.session.execute(
+        db.select(Reports)
+        .where(Reports.status == 'resolved')
+        .order_by(Reports.status)
+    ).scalars().all()
+
+    progress = db.session.execute(
+        db.select(Reports)
+        .where(Reports.status == 'progress')
+        .order_by(Reports.status)
+    ).scalars().all()
+    return render_template("admin.html", all_reports=reports, pending=pending,
+                           resolved=resolved, progress=progress)
 
 @app.route("/change_password", methods=["GET", "POST"])
 def change_password():

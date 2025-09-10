@@ -435,7 +435,7 @@
                         <div class="stats-card">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="stats-number text-primary">247</p>
+                                    <p class="stats-number text-primary">{{ all_reports|length }}</p>
                                     <p class="stats-label">Total Reports</p>
                                     <p class="stats-change positive">+12% from last month</p>
                                 </div>
@@ -452,7 +452,7 @@
                         <div class="stats-card">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="stats-number text-warning">43</p>
+                                    <p class="stats-number text-warning">{{ pending|length }}</p>
                                     <p class="stats-label">Pending</p>
                                     <p class="stats-change negative">+8% from last week</p>
                                 </div>
@@ -469,7 +469,7 @@
                         <div class="stats-card">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="stats-number text-success">189</p>
+                                    <p class="stats-number text-success">{{ resolved|length }}</p>
                                     <p class="stats-label">Resolved</p>
                                     <p class="stats-change positive">+24% from last month</p>
                                 </div>
@@ -486,7 +486,7 @@
                         <div class="stats-card">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="stats-number text-info">15</p>
+                                    <p class="stats-number text-info">{{ progress|length }}</p>
                                     <p class="stats-label">In Progress</p>
                                     <p class="stats-change positive">+5% from last week</p>
                                 </div>

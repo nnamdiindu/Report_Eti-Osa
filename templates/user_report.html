@@ -17,7 +17,7 @@
                             {% set options = [
                             ('reports', 'All Reports'),
                             ('pending', 'Pending'),
-                            ('work_in_progress', 'Work in Progress'),
+                            ('progress', 'Work in Progress'),
                             ('resolved', 'Resolved')
                             ] %}
 
@@ -42,11 +42,11 @@
         <div class="metric-label">Total Reports</div>
     </div>
     <div class="card-metric card-pending">
-        <div class="metric-number text-warning">0</div>
-        <div class="metric-label">Active</div>
+        <div class="metric-number text-warning">{{ progress|length }}</div>
+        <div class="metric-label">Progress</div>
     </div>
     <div class="card-metric card-resolved">
-        <div class="metric-number text-success">0</div>
+        <div class="metric-number text-success">{{ resolved|length }}</div>
         <div class="metric-label">Resolved</div>
     </div>
 </div>
@@ -56,7 +56,12 @@
 <div class="card mb-4">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">{{ report.category|title }} Issue</h5>
+            <h5 class="mb-0">{{ report.category|title }} Issue
+                <span
+                class="badge bg-{{ 'success' if report.status == 'resolved' else 'warning' if report.status == 'in_progress' else 'secondary' }}">
+                {{ report.status|title }}
+            </span>
+            </h5>
             <span
                 class="badge bg-{{ 'danger' if report.priority == 'urgent' else 'warning' if report.priority == 'high' else 'info' if report.priority == 'medium' else 'secondary' }}">
                 {{ report.priority|title }}
@@ -131,13 +136,6 @@
         {% else %}
         <p class="text-muted fst-italic">No attachments</p>
         {% endif %}
-
-        <div class="mt-3">
-            <span
-                class="badge bg-{{ 'success' if report.status == 'resolved' else 'warning' if report.status == 'in_progress' else 'secondary' }}">
-                {{ report.status|title }}
-            </span>
-        </div>
     </div>
 </div>
 {% endfor %}
