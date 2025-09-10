@@ -104,16 +104,6 @@ def get_specific_status_reports(status):
     ).scalars().all()
     return specific_reports
 
-def get_report_sender(report_id):
-    stmt = select(Reports).where(Reports.id == report_id)
-    report = db.session.scalar(stmt)
-    if report:
-        return report.user
-    return None
-
-def view_report():
-    pass
-
 
 @app.route("/")
 def index():
