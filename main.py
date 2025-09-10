@@ -83,6 +83,35 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
+def get_all_user_reports():
+    all_user_reports = db.session.execute(
+        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.created_at.desc())
+    ).scalars().all()
+    return all_user_reports
+
+def get_all_reports():
+    all_reports = db.session.execute(
+        db.select(Reports).order_by(Reports.created_at.desc())
+    ).scalars().all()
+    return all_reports
+
+def get_specific_status_reports(status):
+    specific_reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.user_id == current_user.id)
+        .where(Reports.status == f"{status}")
+        .order_by(Reports.created_at.desc())
+    ).scalars().all()
+    return specific_reports
+
+def get_report_sender(report_id):
+    stmt = select(Reports).where(Reports.id == report_id)
+    report = db.session.scalar(stmt)
+    if report:
+        return report.user
+    return None
+
+
 
 @app.route("/")
 def index():
@@ -155,33 +184,16 @@ def login():
 @login_required
 def dashboard():
     """Display current user's reports with files"""
-    reports = db.session.execute(
-        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.created_at.desc())
-    ).scalars().all()
+    reports = get_all_user_reports()
 
     """Display current user's pending reports"""
-    pending_reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.user_id == current_user.id)
-        .where(Reports.status == "pending")
-        .order_by(Reports.created_at.desc())
-    ).scalars().all()
+    pending_reports = get_specific_status_reports("pending")
 
     """Display current user's resolved reports"""
-    resolved_reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.user_id == current_user.id)
-        .where(Reports.status == "resolved")
-        .order_by(Reports.created_at.desc())
-    ).scalars().all()
+    resolved_reports = get_specific_status_reports("resolved")
 
     """Display current user's in_progress reports"""
-    in_progress_reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.user_id == current_user.id)
-        .where(Reports.status == "progress")
-        .order_by(Reports.created_at.desc())
-    ).scalars().all()
+    in_progress_reports = get_specific_status_reports("progress")
 
     return render_template("dashboard.html", reports=reports, pending_reports=pending_reports,
                            resolved_reports=resolved_reports, in_progress_reports=in_progress_reports,
@@ -316,39 +328,16 @@ def get_file(file_id):
 def user_reports():
     """Display current user's reports with files"""
     selected_category = None  # Default for GET requests
-    reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.user_id == current_user.id)
-        .order_by(Reports.created_at.desc())
-    ).scalars().all()
+    reports = get_all_user_reports()
 
     # GET request - show all reports
-    all_reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.user_id == current_user.id)
-        .order_by(Reports.created_at.desc())
-    ).scalars().all()
+    all_reports = get_all_user_reports()
 
-    pending_reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.user_id == current_user.id)
-        .where(Reports.status == "pending")
-        .order_by(Reports.created_at.desc())
-    ).scalars().all()
+    pending_reports = get_specific_status_reports("pending")
 
-    resolved_reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.user_id == current_user.id)
-        .where(Reports.status == "resolved")
-        .order_by(Reports.created_at.desc())
-    ).scalars().all()
+    resolved_reports = get_specific_status_reports("resolved")
 
-    in_progress_reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.user_id == current_user.id)
-        .where(Reports.status == "progress")
-        .order_by(Reports.created_at.desc())
-    ).scalars().all()
+    in_progress_reports = get_specific_status_reports("progress")
 
     if request.method == "POST":
         work_category = request.form.get("category")
@@ -356,20 +345,10 @@ def user_reports():
 
         if work_category and work_category != "reports":  # "reports" means "All Reports"
             # Filter reports based on dropdown selection
-            reports = db.session.execute(
-                db.select(Reports)
-                .where(Reports.user_id == current_user.id)
-                .where(Reports.status == work_category)
-                .order_by(Reports.created_at.desc())
-            ).scalars().all()
+            reports = get_specific_status_reports(work_category)
         else:
             # Show all reports
-            reports = db.session.execute(
-                db.select(Reports)
-                .where(Reports.user_id == current_user.id)
-                .order_by(Reports.created_at.desc())
-            ).scalars().all()
-
+            reports = get_all_user_reports()
 
     return render_template("user_report.html",
                            current_user=current_user,
@@ -384,24 +363,12 @@ def user_reports():
 @login_required
 def profile():
     """Display current user's reports with files"""
-    reports = db.session.execute(
-        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.created_at.desc())
-    ).scalars().all()
+    reports = get_all_user_reports()
 
     """Display current user's pending reports"""
-    pending = db.session.execute(
-    db.select(Reports)
-    .where(Reports.user_id == current_user.id)
-    .where(Reports.status == 'pending')
-    .order_by(Reports.status)
-).scalars().all()
+    pending = get_specific_status_reports("pending")
 
-    resolved_reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.user_id == current_user.id)
-        .where(Reports.status == "resolved")
-        .order_by(Reports.created_at.desc())
-    ).scalars().all()
+    resolved_reports = get_specific_status_reports("resolved")
 
     return render_template("profile.html", reports=reports, pending=pending,
                            resolved_reports=resolved_reports, current_user=current_user)
@@ -487,28 +454,16 @@ def edit_profile():
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin_dashboard():
-    reports = db.session.execute(
-        db.select(Reports).order_by(Reports.created_at.desc())
-    ).scalars().all()
+    all_reports = get_all_reports()
 
-    pending = db.session.execute(
-        db.select(Reports)
-        .where(Reports.status == 'pending')
-        .order_by(Reports.status)
-    ).scalars().all()
+    pending = get_specific_status_reports("pending")
 
-    resolved = db.session.execute(
-        db.select(Reports)
-        .where(Reports.status == 'resolved')
-        .order_by(Reports.status)
-    ).scalars().all()
+    resolved = get_specific_status_reports("resolved")
 
-    progress = db.session.execute(
-        db.select(Reports)
-        .where(Reports.status == 'progress')
-        .order_by(Reports.status)
-    ).scalars().all()
-    return render_template("admin.html", all_reports=reports, pending=pending,
+    progress = get_specific_status_reports("progress")
+
+    # get_report_sender(report_id)
+    return render_template("admin.html", all_reports=all_reports, pending=pending,
                            resolved=resolved, progress=progress)
 
 @app.route("/change_password", methods=["GET", "POST"])
