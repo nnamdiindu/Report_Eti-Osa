@@ -41,9 +41,11 @@
                                 <h4 class="mb-1">{{ current_user.full_name }}</h4>
                             </div>
                             <div id="nameEdit" class="d-none mb-2">
-                                <input type="text" class="form-control" id="nameInput" value="{{ current_user.full_name }}">
+                                <input type="text" class="form-control" id="nameInput"
+                                    value="{{ current_user.full_name }}">
                             </div>
-                            <p class="text-muted mb-1">Member since {{ current_user.created_at.strftime("%B %d, %Y") }}</p>
+                            <p class="text-muted mb-1">Member since {{ current_user.created_at.strftime("%B %d, %Y") }}
+                            </p>
                             <span class="badge-success">Active Citizen</span>
                         </div>
                     </div>
@@ -59,10 +61,11 @@
                                     </div>
                                     <div id="emailDisplay" class="info-value">{{ current_user.email }}</div>
                                     <div id="emailEdit" class="d-none">
-                                        <input type="email" class="form-control" id="emailInput" value="{{ current_user.email }}">
+                                        <input type="email" class="form-control" id="emailInput"
+                                            value="{{ current_user.email }}">
                                     </div>
                                 </div>
-                                
+
                                 <!-- Phone -->
                                 <div class="info-item">
                                     <div class="info-label">
@@ -71,10 +74,11 @@
                                     </div>
                                     <div id="phoneDisplay" class="info-value">{{ current_user.phone }}</div>
                                     <div id="phoneEdit" class="d-none">
-                                        <input type="tel" class="form-control" id="phoneInput" value="{{ current_user.phone }}">
+                                        <input type="tel" class="form-control" id="phoneInput"
+                                            value="{{ current_user.phone }}">
                                     </div>
                                 </div>
-                                
+
                                 <!-- Address -->
                                 <div class="info-item">
                                     <div class="info-label">
@@ -83,7 +87,8 @@
                                     </div>
                                     <div id="addressDisplay" class="info-value">{{ current_user.address }}</div>
                                     <div id="addressEdit" class="d-none">
-                                        <textarea class="form-control" id="addressInput" rows="2">{{ current_user.address }}</textarea>
+                                        <textarea class="form-control" id="addressInput"
+                                            rows="2">{{ current_user.address }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -98,7 +103,8 @@
                         <i class="bi bi-check-circle"></i> Profile updated successfully!
                     </div>
                     <div id="errorMessage" class="alert alert-danger d-none mt-3">
-                        <i class="bi bi-exclamation-circle"></i> <span id="errorText">An error occurred while saving.</span>
+                        <i class="bi bi-exclamation-circle"></i> <span id="errorText">An error occurred while
+                            saving.</span>
                     </div>
                 </div>
             </div>
@@ -165,7 +171,7 @@
                 <div class="card-body">
                     <div class="activity-item">
                         <span class="activity-label">Total Reports</span>
-                        <span class="activity-value">{{ reports|length  }}</span>
+                        <span class="activity-value">{{ reports|length }}</span>
                     </div>
                     <div class="activity-item">
                         <span class="activity-label">Issue Pending</span>
@@ -181,7 +187,13 @@
                     </div>
                     <div class="activity-item">
                         <span class="activity-label">Success Rate</span>
-                        <span class="activity-value">{{ (resolved_reports|length/reports|length * 100)|round(2, 'floor')}}%</span>
+                        <span class="activity-value">
+                            {% if reports|length > 0 %}
+                            {{ (resolved_reports|length / reports|length * 100)|round(2, 'floor') }}%
+                            {% else %}
+                            0%
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
             </div>
