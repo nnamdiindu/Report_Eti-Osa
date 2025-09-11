@@ -409,7 +409,7 @@
                             <label class="form-label">Status</label>
                             <select class="form-control" name="status">
                                 <option value="Pending" selected>Pending</option>
-                                <option value="In Progress">In Progress</option>
+                                <option value="Progress">In Progress</option>
                                 <option value="Resolved">Resolved</option>
                                 <option value="Closed">Closed</option>
                             </select>
@@ -562,74 +562,133 @@
         </div>
     </div>
     {% endfor %}
-    <script>
-        function openModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
+   <script>
+// Your existing functions - keep these as they are
+function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+function updateProgress(value) {
+    document.getElementById('progressValue').textContent = value;
+    document.getElementById('progressBar').style.width = value + '%';
+}
+
+function selectTeam(element, teamId) {
+    document.querySelectorAll('.team-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    element.classList.add('selected');
+    console.log('Selected team:', teamId);
+}
+
+// Close modals when clicking outside
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.classList.remove('active');
         }
-        
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-        
-        function updateProgress(value) {
-            document.getElementById('progressValue').textContent = value;
-            document.getElementById('progressBar').style.width = value + '%';
-        }
-        
-        function selectTeam(element, teamId) {
-            // Remove selected class from all team options
-            document.querySelectorAll('.team-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            
-            // Add selected class to clicked option
-            element.classList.add('selected');
-            
-            // You can store the selected team ID in a hidden input or variable
-            console.log('Selected team:', teamId);
-        }
-        
-        // Close modals when clicking outside
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
-            });
-        });
-        
-        // Handle form submissions (you'll connect these to your Flask routes)
-        document.getElementById('updateForm').addEventListener('submit', function(e) {
+    });
+});
+
+// Fixed JavaScript for handling modal updates
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle all update forms - Fixed form selection
+    document.querySelectorAll('form[id="updateForm"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Collect form data
+            // Get the report ID from the modal ID or a data attribute
+            const modal = this.closest('.modal');
+            const modalId = modal.id; // e.g., "updateModal-123"
+            const reportId = modalId.replace('updateModal-', '');
+            
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
             
             console.log('Update form data:', data);
+            console.log('Report ID:', reportId);
             
-            // In your Flask app, you'd send this to your update route:
-            fetch('/update_report', {
+            // Fixed URL construction
+            fetch(`/update_report/${reportId}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result.status === 'success') {
+                    alert('Report updated successfully!');
+                    closeModal(`updateModal-${reportId}`);
+                    location.reload(); // Refresh to show changes
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to update'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the report: ' + error.message);
             });
-            
-            alert('Update functionality - connect to your Flask route!');
         });
-        
-        document.getElementById('assignForm').addEventListener('submit', function(e) {
+    });
+
+    // Handle all assign forms - Similar fix
+    document.querySelectorAll('form[id="assignForm"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            const modal = this.closest('.modal');
+            const modalId = modal.id;
+            const reportId = modalId.replace('assignModal-', '');
             
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
             
-            console.log('Assign form data:', data);
+            // Get selected team from the selected team option
+            const selectedTeam = document.querySelector('.team-option.selected');
+            if (selectedTeam) {
+                data.team = selectedTeam.onclick.toString().match(/'(.+?)'/)[1]; // Extract team ID
+            }
             
-            // Connect to your Flask assign route
-            alert('Assign functionality - connect to your Flask route!');
+            console.log('Assign form data:', data);
+            console.log('Report ID:', reportId);
+            
+            fetch(`/assign_report/${reportId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                if (result.status === 'success') {
+                    alert('Report assigned successfully!');
+                    closeModal(`assignModal-${reportId}`);
+                    location.reload();
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to assign'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while assigning the report: ' + error.message);
+            });
         });
-    </script>
+    });
+});
+</script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
