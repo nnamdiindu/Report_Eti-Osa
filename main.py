@@ -369,7 +369,7 @@ def profile():
                            resolved_reports=resolved_reports, current_user=current_user)
 
 @app.route("/edit_profile", methods=["POST"])
-@login_required 
+@login_required
 def edit_profile():
     if request.method == "POST":
         try:
@@ -465,8 +465,7 @@ def admin_dashboard():
 def update_report():
     if request.method == "POST":
         data = request.get_json()
-        # Your update logic here
-        print(data)
+        
 
     return jsonify({'status': 'success'})
 
