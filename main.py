@@ -39,6 +39,8 @@ class Reports(db.Model):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     status: Mapped[str] = mapped_column(String(50), nullable=False, default='pending')
+    progress: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    team_assigned_to: Mapped[str] = mapped_column(String(100), nullable=False, default="Unassigned")
 
     # Relationship to files
     files: Mapped[list["ReportFiles"]] = relationship("ReportFiles", back_populates="report",
@@ -481,6 +483,8 @@ def update_report(report_id):
 
         # Extract and validate data from request
         report_status = data.get("status", "").strip().lower()
+        report_progress = int(data.get("progress", "").strip())
+
         # report_priority = data.get("priority", "").strip().lower()
         # report_title = data.get("title", "").strip()
         # report_description = data.get("description", "").strip()
@@ -493,6 +497,7 @@ def update_report(report_id):
         if report_status and report_status in valid_statuses:
             report.status = report_status
 
+
         # if report_priority and report_priority in valid_priorities:
         #     report.priority = report_priority
         #
@@ -502,6 +507,9 @@ def update_report(report_id):
         # if report_description:
         #     report.description = report_description
 
+        #Update report progress in dB
+        report.progress = report_progress
+
         db.session.commit()
 
         return jsonify({
@@ -510,6 +518,7 @@ def update_report(report_id):
             'data': {
                 'id': report.id,
                 'status': report.status,
+                'progress': report.progress
                 # 'priority': report.priority,
                 # 'category': report.category
             }
