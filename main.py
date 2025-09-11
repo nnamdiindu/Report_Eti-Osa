@@ -106,6 +106,14 @@ def get_specific_status_reports(status):
     ).scalars().all()
     return specific_reports
 
+def get_all_specific_status_reports(status):
+    all_specific_reports = db.session.execute(
+        db.select(Reports)
+        .where(Reports.status == f"{status}")
+        .order_by(Reports.created_at.desc())
+    ).scalars().all()
+    return all_specific_reports
+
 # @app.route("/edit_admin")
 # def edit_admin():
 #     return render_template("admin-edit-page.html")
@@ -454,14 +462,14 @@ def edit_profile():
 def admin_dashboard():
     all_reports = get_all_reports()
 
-    pending = get_specific_status_reports("pending")
+    all_pending = get_all_specific_status_reports("pending")
 
-    resolved = get_specific_status_reports("resolved")
+    all_resolved = get_all_specific_status_reports("resolved")
 
-    progress = get_specific_status_reports("progress")
+    all_progress = get_all_specific_status_reports("progress")
 
-    return render_template("admin.html", all_reports=all_reports, pending=pending,
-                           resolved=resolved, progress=progress)
+    return render_template("admin.html", all_reports=all_reports, pending=all_pending,
+                           resolved=all_resolved, progress=all_progress)
 
 
 @app.route('/update_report/<int:report_id>', methods=['POST'])
