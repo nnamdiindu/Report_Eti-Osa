@@ -274,11 +274,11 @@
                                 <!-- To be updated with progress to ensure its dynamic -->
                                 <td>
                                     <div class="progress-bar-container">
-                                        <div class="progress-bar bg-info" style="width: 65%"></div>
+                                        <div class="progress-bar bg-info" style="width: {{ report.progress }}%"></div>
                                     </div>
-                                    <small>65%</small>
+                                    <small>{{ report.progress }}%</small>
                                 </td>
-                                <td>Road Team A</td>
+                                <td>{{ report.team_assigned_to }}</td>
                                 <td>{{ report.created_at.strftime("%B %d, %Y") }}</td>
                                 <td class="action-buttons">
                                     <button class="btn btn-sm btn-primary"
@@ -342,14 +342,14 @@
                     
                     <div class="info-card">
                         <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-users"></i> Assigned Team</h4>
-                        <p>NIL</p>
+                        <p>{{ report.team_assigned_to }}</p>
                     </div>
                 </div>
                 
                 <div style="margin: 1.5rem 0;">
-                    <h4 style="margin-bottom: 0.5rem;">Progress (65%)</h4>
+                    <h4 style="margin-bottom: 0.5rem;">Progress ({{ report.progress }}%)</h4>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 65%;"></div>
+                        <div class="progress-fill" style="width: {{ report.progress }}%;"></div>
                     </div>
                 </div>
                 
@@ -427,11 +427,11 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Progress (<span id="progressValue">65</span>%)</label>
-                        <input type="range" min="0" max="100" value="65" class="form-control" 
+                        <label class="form-label">Progress (<span id="progressValue">{{ report.progress }}</span>%)</label>
+                        <input type="range" min="0" max="100" value="{{ report.progress }}" class="form-control" 
                                style="height: 40px;" oninput="updateProgress(this.value)" name="progress">
                         <div class="progress-bar" style="margin-top: 0.5rem;">
-                            <div id="progressBar" class="progress-fill" style="width: 65%;"></div>
+                            <div id="progressBar" class="progress-fill" style="width: {{ report.progress }}%;"></div>
                         </div>
                     </div>
                     
