@@ -461,19 +461,119 @@ def admin_dashboard():
     return render_template("admin.html", all_reports=all_reports, pending=pending,
                            resolved=resolved, progress=progress)
 
-@app.route('/update_report', methods=['POST'])
-def update_report():
-    if request.method == "POST":
+
+@app.route('/update_report/<int:report_id>', methods=['POST'])
+@login_required
+def update_report(report_id):
+    """Update a specific report - fixed version"""
+    try:
         data = request.get_json()
-        
+        print(data)
+        if not data:
+            return jsonify({'status': 'error', 'message': 'No data provided'}), 400
 
-    return jsonify({'status': 'success'})
+        # Find the specific report to update
+        report = db.get_or_404(Reports, report_id)
 
-@app.route('/assign_report', methods=['POST'])
-def assign_report():
-    data = request.get_json()
-    # Your assignment logic here
-    return jsonify({'status': 'success'})
+        # Check if user has permission (admin or report owner)
+        if current_user.id != 1 and current_user.id != report.user_id:
+            return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
+
+        # Extract and validate data from request
+        report_status = data.get("status", "").strip().lower()
+        # report_priority = data.get("priority", "").strip().lower()
+        # report_title = data.get("title", "").strip()
+        # report_description = data.get("description", "").strip()
+
+        # Validate status values
+        valid_statuses = ['pending', 'assigned', 'progress', 'resolved', 'closed']
+        # valid_priorities = ['low', 'medium', 'high', 'critical']
+
+        # Update the report fields
+        if report_status and report_status in valid_statuses:
+            report.status = report_status
+
+        # if report_priority and report_priority in valid_priorities:
+        #     report.priority = report_priority
+        #
+        # if report_title:
+        #     report.category = report_title  # Assuming title maps to category
+        #
+        # if report_description:
+        #     report.description = report_description
+
+        db.session.commit()
+
+        return jsonify({
+            'status': 'success',
+            'message': 'Report updated successfully',
+            'data': {
+                'id': report.id,
+                'status': report.status,
+                # 'priority': report.priority,
+                # 'category': report.category
+            }
+        })
+
+    except Exception as e:
+        print(f"Error updating report: {e}")
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': f'Failed to update report: {str(e)}'}), 500
+
+
+# @app.route('/assign_report/<int:report_id>', methods=['POST'])
+# @login_required
+# def assign_report(report_id):
+#     """Assign a report to a team - fixed version"""
+#     try:
+#         data = request.get_json()
+#         if not data:
+#             return jsonify({'status': 'error', 'message': 'No data provided'}), 400
+#
+#         # Find the specific report
+#         report = db.get_or_404(Reports, report_id)
+#
+#         # Check if user is admin
+#         if current_user.id != 1:
+#             return jsonify({'status': 'error', 'message': 'Unauthorized - Admin access required'}), 403
+#
+#         # Extract assignment data
+#         team = data.get("team", "").strip()
+#         priority = data.get("priority", "").strip().lower()
+#         deadline = data.get("deadline", "").strip()
+#         notes = data.get("notes", "").strip()
+#
+#         # Update report with assignment info
+#         if priority in ['low', 'medium', 'high', 'critical']:
+#             report.priority = priority
+#
+#         # For now, we'll store team info in status or create a new field
+#         # You might want to add an 'assigned_team' field to your Reports model
+#         if team:
+#             # Update status to assigned when team is assigned
+#             report.status = 'assigned'
+#
+#         # You could add these fields to your Reports model:
+#         # report.assigned_team = team
+#         # report.deadline = datetime.strptime(deadline, '%Y-%m-%d') if deadline else None
+#         # report.assignment_notes = notes
+#
+#         db.session.commit()
+#
+#         return jsonify({
+#             'status': 'success',
+#             'message': f'Report assigned successfully to {team}',
+#             'data': {
+#                 'id': report.id,
+#                 'status': report.status,
+#                 'priority': report.priority
+#             }
+#         })
+#
+#     except Exception as e:
+#         print(f"Error assigning report: {e}")
+#         db.session.rollback()
+#         return jsonify({'status': 'error', 'message': f'Failed to assign report: {str(e)}'}), 500
 
 @app.route("/change_password", methods=["GET", "POST"])
 def change_password():
