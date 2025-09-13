@@ -1,4 +1,5 @@
 import os
+import smtplib
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, url_for, request, flash, Response, jsonify
@@ -188,6 +189,31 @@ def get_all_user_notifications():
         .order_by(Notification.created_at.desc())
     ).scalars().all()
     return all_user_notifications
+
+def send_email_notification(subject, message, receiver_email):
+    try:
+        # Format email content
+        subject = f"{subject}"
+
+        body = f"{message}\n"
+
+        # Send email
+        with smtplib.SMTP("smtp.gmail.com", port=587) as connection:
+            connection.starttls()
+            connection.login(
+                user=os.environ.get("MY_EMAIL"),
+                password=os.environ.get("EMAIL_PASSWORD")
+            )
+            connection.sendmail(
+                from_addr=os.environ.get("MY_EMAIL"),
+                to_addrs=receiver_email,
+                msg=f"Subject:{subject}\n\n{body}".encode('utf-8')
+            )
+
+        print("Email report sent successfully")
+
+    except Exception as e:
+        print(f"Error sending email: {e}")
 
 
 def time_ago(timestamp):
@@ -403,6 +429,12 @@ def report_issue():
                 title="Report Received",
                 message=f"Thank you for reporting the {category.lower()}. We'll review it within 2 business days."
             )
+            # Send email notification to user
+            send_email_notification(
+                receiver_email=current_user.email,
+                subject="Report Received",
+                message=f"Thank you for reporting the {category.lower()}. We'll review it within 2 business days."
+            )
 
             db.session.commit()
 
@@ -593,6 +625,7 @@ def update_report(report_id):
 
         # Find the specific report to update
         report = db.get_or_404(Report, report_id)
+        old_status = report.status  # Store old status for comparison
 
         # Check if user has permission (admin or report owner)
         if current_user.id != 1 and current_user.id != report.user_id:
@@ -627,14 +660,52 @@ def update_report(report_id):
         #Update report progress in dB
         report.progress = report_progress
 
-        # Create notification for report status update
-        create_notification(
-            user_id=report.user_id,
-            report_id=report.id,
-            notification_type=NotificationType.STATUS_UPDATE,
-            title="Report Status Updated",
-            message=f"Your {report.category} report on {report.location} has been marked as {report.status}."
-        )
+        # Create notifications based on status changes
+        if old_status != report_status:
+            if report_status == "resolved":
+                create_notification(
+                    user_id=report.user_id,
+                    report_id=report.id,
+                    notification_type=NotificationType.ISSUE_RESOLVED,
+                    title="Issue Resolved",
+                    message=f"Your {report.category.lower()} report on {report.location} has been resolved"
+                )
+                # Send email notification to user
+                send_email_notification(
+                    receiver_email=current_user.email,
+                    subject="Issue Resolved",
+                    message=f"Your {report.category.lower()} report on {report.location} has been resolved"
+                )
+
+            elif report_status == "progress":
+                create_notification(
+                    user_id=report.user_id,
+                    report_id=report.id,
+                    notification_type=NotificationType.STATUS_UPDATE,
+                    title="Report Status Updated",
+                    message=f"Your {report.category} report on {report.location} has been marked as {report.status}."
+                )
+                # Send email notification to user
+                send_email_notification(
+                    receiver_email=current_user.email,
+                    subject="Report Status Updated",
+                    message=f"Your {report.category} report on {report.location} has been marked as {report.status}."
+                )
+
+            elif report_status == "assigned":
+                create_notification(
+                    user_id=report.user_id,
+                    report_id=report.id,
+                    notification_type=NotificationType.REPORT_ASSIGNED,
+                    title="Report Assigned",
+                    message=f"Your {report.category.lower()} report has been assigned to our maintenance team"
+                )
+                # Send email notification to user
+                send_email_notification(
+                    receiver_email=current_user.email,
+                    subject="Report Assigned",
+                    message=f"Your {report.category.lower()} report has been assigned to our maintenance team"
+                )
 
         db.session.commit()
 
