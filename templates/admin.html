@@ -267,7 +267,7 @@
                                         {{ report.priority|title }}
                                     </span></td>
                                 <td><span
-                                        class="badge status-{{ 'in-progress' if report.status == 'progress' else 'resolved' if report.status == 'resolved' else 'assigned' if report.status == 'assigned' else 'new' if report.status == 'pending'}}">
+                                        class="badge status-{{ 'in-progress' if report.status == 'progress' else 'resolved' if report.status == 'resolved' else 'assigned' if report.status == 'assigned' else 'new' if report.status == 'pending' else 'closed' if report.status == 'closed'}}">
                                         {{ report.status|title }}
                                     </span></td>
 
@@ -398,20 +398,20 @@
                         <div class="form-group">
                             <label class="form-label">Priority</label>
                             <select class="form-control" name="priority">
-                                <option value="Low">Low</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="High">High</option>
-                                <option value="Critical">Critical</option>
+                                <option value="Low" {{ 'selected' if report.priority == 'low' else '' }}>Low</option>
+                                <option value="Medium" {{ 'selected' if report.priority == 'medium' else '' }}>Medium</option>
+                                <option value="High" {{ 'selected' if report.priority == 'high' else '' }}>High</option>
+                                <option value="Urgent" {{ 'selected' if report.priority == 'urgent' else '' }}>Urgent</option>
                             </select>
                         </div>
                         
                         <div class="form-group">
                             <label class="form-label">Status</label>
-                            <select class="form-control" name="status">
-                                <option value="Pending" selected>Pending</option>
-                                <option value="Progress">In Progress</option>
-                                <option value="Resolved">Resolved</option>
-                                <option value="Closed">Closed</option>
+                            <select class="form-control" name="status" >
+                                <option value="Pending" {{ 'selected' if report.status == 'pending' else '' }}>Pending</option>
+                                <option value="Progress" {{ 'selected' if report.status == 'progress' else '' }}>In Progress</option>
+                                <option value="Resolved" {{ 'selected' if report.status == 'resolved' else '' }}>Resolved</option>
+                                <option value="Closed" {{ 'selected' if report.status == 'closed' else '' }}>Closed</option>
                             </select>
                         </div>
                         
