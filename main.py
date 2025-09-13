@@ -1,12 +1,14 @@
 import os
+import smtplib
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, url_for, request, flash, Response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
 from flask_login import login_required, login_user, current_user, LoginManager, logout_user, UserMixin
-from sqlalchemy import String, Integer, ForeignKey, Float, LargeBinary, select, DateTime
+from sqlalchemy import String, Integer, ForeignKey, Float, LargeBinary, select, DateTime, Boolean
 from werkzeug.security import generate_password_hash, check_password_hash
+from enum import Enum as PyEnum
 
 
 app = Flask(__name__)
@@ -27,12 +29,38 @@ db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
 
-class Reports(db.Model):
+class NotificationType(PyEnum):
+    REPORT_RECEIVED = "report_received"
+    STATUS_UPDATE = "status_update"
+    ISSUE_RESOLVED = "issue_resolved"
+    NEW_COMMENT = "new_comment"
+    COMPLETION_DELAYED = "completion_delayed"
+    REPORT_ASSIGNED = "report_assigned"
+
+
+class Notification(db.Model):
+    __tablename__ = "notifications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
+    report_id: Mapped[int] = mapped_column(Integer, ForeignKey('reports.id'), nullable=True)
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    message: Mapped[str] = mapped_column(String(500), nullable=False)
+    is_read: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="notifications")
+    report: Mapped["Report"] = relationship("Report", back_populates="notifications")
+
+
+class Report(db.Model):
     __tablename__ = "reports"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     category: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[str] = mapped_column(String(2000), nullable=False)  # Increased length
+    description: Mapped[str] = mapped_column(String(2000), nullable=False)
     location: Mapped[str] = mapped_column(String(2000), nullable=False)
     area: Mapped[str] = mapped_column(String(100), nullable=False)
     priority: Mapped[str] = mapped_column(String(20), nullable=False, default='medium')
@@ -42,10 +70,12 @@ class Reports(db.Model):
     progress: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     team_assigned_to: Mapped[str] = mapped_column(String(100), nullable=False, default="Unassigned")
 
-    # Relationship to files
+    # Relationships
     files: Mapped[list["ReportFiles"]] = relationship("ReportFiles", back_populates="report",
                                                       cascade="all, delete-orphan")
     user: Mapped["User"] = relationship("User", back_populates="reports")
+    notifications: Mapped[list["Notification"]] = relationship("Notification", back_populates="report",
+                                                              cascade="all, delete-orphan")
 
 
 class ReportFiles(db.Model):
@@ -60,10 +90,9 @@ class ReportFiles(db.Model):
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationship back to report
-    report: Mapped["Reports"] = relationship("Reports", back_populates="files")
+    report: Mapped["Report"] = relationship("Report", back_populates="files")
 
 
-# Update User model to include relationship to reports
 class User(UserMixin, db.Model):
     __tablename__ = "user"
 
@@ -75,8 +104,12 @@ class User(UserMixin, db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     address: Mapped[str] = mapped_column(String(1000), nullable=False)
 
-    # Relationship to reports
-    reports: Mapped[list["Reports"]] = relationship("Reports", back_populates="user")
+    # Relationships
+    reports: Mapped[list["Report"]] = relationship("Report", back_populates="user")
+    notifications: Mapped[list["Notification"]] = relationship("Notification", back_populates="user",
+                                                               cascade="all, delete-orphan")
+
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -85,38 +118,131 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
+def create_notification(user_id, report_id, notification_type, title, message):
+    # Create a new notification for a user
+    try:
+        notification = Notification(
+            user_id=user_id,
+            report_id=report_id,
+            type=notification_type.value,
+            title=title,
+            message=message
+        )
+
+        db.session.add(notification)
+        db.session.commit()
+        return notification
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating notification: {e}")
+        return None
+
+
+def get_user_notifications(user_id, limit=None):
+    # Get all notifications for a user, ordered by newest first
+    stmt = (
+        db.select(Notification)
+        .where(Notification.user_id == user_id)
+        .order_by(Notification.created_at.desc())
+    )
+    if limit:
+        stmt = stmt.limit(limit)
+
+    query = db.session.execute(stmt)
+    return query.scalars().all()
+
+
 def get_all_user_reports():
     all_user_reports = db.session.execute(
-        db.select(Reports).where(Reports.user_id == current_user.id).order_by(Reports.created_at.desc())
+        db.select(Report).where(Report.user_id == current_user.id).order_by(Report.created_at.desc())
     ).scalars().all()
     return all_user_reports
 
 def get_all_reports():
     all_reports = db.session.execute(
-        db.select(Reports).order_by(Reports.created_at.desc())
+        db.select(Report).order_by(Report.created_at.desc())
     ).scalars().all()
     return all_reports
 
 def get_specific_status_reports(status):
     specific_reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.user_id == current_user.id)
-        .where(Reports.status == f"{status}")
-        .order_by(Reports.created_at.desc())
+        db.select(Report)
+        .where(Report.user_id == current_user.id)
+        .where(Report.status == f"{status}")
+        .order_by(Report.created_at.desc())
     ).scalars().all()
     return specific_reports
 
 def get_all_specific_status_reports(status):
     all_specific_reports = db.session.execute(
-        db.select(Reports)
-        .where(Reports.status == f"{status}")
-        .order_by(Reports.created_at.desc())
+        db.select(Report)
+        .where(Report.status == f"{status}")
+        .order_by(Report.created_at.desc())
     ).scalars().all()
     return all_specific_reports
 
-# @app.route("/edit_admin")
-# def edit_admin():
-#     return render_template("admin-edit-page.html")
+def get_all_user_notifications():
+    all_user_notifications = db.session.execute(
+        db.select(Notification)
+        .where(Notification.user_id == current_user.id)
+        .order_by(Notification.created_at.desc())
+    ).scalars().all()
+    return all_user_notifications
+
+def send_email_notification(subject, message, receiver_email):
+    try:
+        # Format email content
+        subject = f"{subject}"
+
+        body = f"{message}\n"
+
+        # Send email
+        with smtplib.SMTP("smtp.gmail.com", port=587) as connection:
+            connection.starttls()
+            connection.login(
+                user=os.environ.get("MY_EMAIL"),
+                password=os.environ.get("EMAIL_PASSWORD")
+            )
+            connection.sendmail(
+                from_addr=os.environ.get("MY_EMAIL"),
+                to_addrs=receiver_email,
+                msg=f"Subject:{subject}\n\n{body}".encode('utf-8')
+            )
+
+        print("Email report sent successfully")
+
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
+
+def time_ago(timestamp):
+    try:
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+
+        now = datetime.now(timezone.utc)
+        diff = now - timestamp
+
+        seconds = diff.total_seconds()
+        minutes = seconds / 60
+        hours = minutes / 60
+        days = hours / 24
+
+        if seconds < 60:
+            return f"{int(seconds)} seconds ago"
+        elif minutes < 60:
+            return f"{int(minutes)} minutes ago"
+        elif hours < 24:
+            return f"{int(hours)} hours ago"
+        else:
+            return f"{int(days)} days ago"
+    except Exception:
+        return "Invalid date"
+
+# Register the filter
+app.jinja_env.filters['timeago'] = time_ago
+
 
 @app.route("/")
 def index():
@@ -272,7 +398,7 @@ def report_issue():
 
         try:
             # Create new report
-            new_report = Reports(
+            new_report = Report(
                 category=category,
                 description=description,
                 location=location,
@@ -294,6 +420,21 @@ def report_issue():
                     file_size=file_info['size']
                 )
                 db.session.add(file_record)
+
+            # Create notification for report received
+            create_notification(
+                user_id=current_user.id,
+                report_id=new_report.id,
+                notification_type=NotificationType.REPORT_RECEIVED,
+                title="Report Received",
+                message=f"Thank you for reporting the {category.lower()}. We'll review it within 2 business days."
+            )
+            # Send email notification to user
+            send_email_notification(
+                receiver_email=current_user.email,
+                subject="Report Received",
+                message=f"Thank you for reporting the {category.lower()}. We'll review it within 2 business days."
+            )
 
             db.session.commit()
 
@@ -478,12 +619,13 @@ def update_report(report_id):
     """Update a specific report - fixed version"""
     try:
         data = request.get_json()
-        print(data)
+
         if not data:
             return jsonify({'status': 'error', 'message': 'No data provided'}), 400
 
         # Find the specific report to update
-        report = db.get_or_404(Reports, report_id)
+        report = db.get_or_404(Report, report_id)
+        old_status = report.status  # Store old status for comparison
 
         # Check if user has permission (admin or report owner)
         if current_user.id != 1 and current_user.id != report.user_id:
@@ -517,6 +659,53 @@ def update_report(report_id):
 
         #Update report progress in dB
         report.progress = report_progress
+
+        # Create notifications based on status changes
+        if old_status != report_status:
+            if report_status == "resolved":
+                create_notification(
+                    user_id=report.user_id,
+                    report_id=report.id,
+                    notification_type=NotificationType.ISSUE_RESOLVED,
+                    title="Issue Resolved",
+                    message=f"Your {report.category.lower()} report on {report.location} has been resolved"
+                )
+                # Send email notification to user
+                send_email_notification(
+                    receiver_email=current_user.email,
+                    subject="Issue Resolved",
+                    message=f"Your {report.category.lower()} report on {report.location} has been resolved"
+                )
+
+            elif report_status == "progress":
+                create_notification(
+                    user_id=report.user_id,
+                    report_id=report.id,
+                    notification_type=NotificationType.STATUS_UPDATE,
+                    title="Report Status Updated",
+                    message=f"Your {report.category} report on {report.location} has been marked as {report.status}."
+                )
+                # Send email notification to user
+                send_email_notification(
+                    receiver_email=current_user.email,
+                    subject="Report Status Updated",
+                    message=f"Your {report.category} report on {report.location} has been marked as {report.status}."
+                )
+
+            elif report_status == "assigned":
+                create_notification(
+                    user_id=report.user_id,
+                    report_id=report.id,
+                    notification_type=NotificationType.REPORT_ASSIGNED,
+                    title="Report Assigned",
+                    message=f"Your {report.category.lower()} report has been assigned to our maintenance team"
+                )
+                # Send email notification to user
+                send_email_notification(
+                    receiver_email=current_user.email,
+                    subject="Report Assigned",
+                    message=f"Your {report.category.lower()} report has been assigned to our maintenance team"
+                )
 
         db.session.commit()
 
@@ -596,11 +785,98 @@ def update_report(report_id):
 def change_password():
     pass
 
-@app.route("/notifications", methods=["GET", "POST"])
+@app.route("/notifications")
 def notifications():
-    if request.method == "POST":
-        request.form.get("")
-    return render_template("notifications.html", current_user=current_user)
+    user_notifications = get_all_user_notifications()
+    return render_template("notifications.html", notifications=user_notifications, current_user=current_user)
+
+
+@app.route("/mark_all_notifications_read", methods=["POST"])
+@login_required
+def mark_all_notifications_read():
+    try:
+        # Update all unread notifications for the current user
+        notifications = db.session.execute(
+            db.select(Notification)
+            .where(Notification.user_id == current_user.id)
+            .where(Notification.is_read == False)
+        ).scalars().all()
+
+        for notification in notifications:
+            notification.is_read = True
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Marked {len(notifications)} notifications as read'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error marking notifications as read: {str(e)}'
+        }), 500
+
+
+@app.route("/mark_notification_read/<int:notification_id>", methods=["POST"])
+@login_required
+def mark_notification_read(notification_id):
+    try:
+        notification = db.get_or_404(Notification, notification_id)
+
+        # Verify the notification belongs to the current user
+        if notification.user_id != current_user.id:
+            return jsonify({
+                'success': False,
+                'message': 'Unauthorized'
+            }), 403
+
+        notification.is_read = True
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Notification marked as read'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error marking notification as read: {str(e)}'
+        }), 500
+
+
+@app.route("/delete_notification/<int:notification_id>", methods=["DELETE"])
+@login_required
+def delete_notification(notification_id):
+    try:
+        notification = db.get_or_404(Notification, notification_id)
+
+        # Verify the notification belongs to the current user
+        if notification.user_id != current_user.id:
+            return jsonify({
+                'success': False,
+                'message': 'Unauthorized'
+            }), 403
+
+        db.session.delete(notification)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Notification deleted'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error deleting notification: {str(e)}'
+        }), 500
+
 
 @app.route("/logout")
 @login_required
