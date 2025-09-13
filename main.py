@@ -720,6 +720,93 @@ def notifications():
     return render_template("notifications.html", notifications=user_notifications, current_user=current_user)
 
 
+@app.route("/mark_all_notifications_read", methods=["POST"])
+@login_required
+def mark_all_notifications_read():
+    try:
+        # Update all unread notifications for the current user
+        notifications = db.session.execute(
+            db.select(Notification)
+            .where(Notification.user_id == current_user.id)
+            .where(Notification.is_read == False)
+        ).scalars().all()
+
+        for notification in notifications:
+            notification.is_read = True
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Marked {len(notifications)} notifications as read'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error marking notifications as read: {str(e)}'
+        }), 500
+
+
+@app.route("/mark_notification_read/<int:notification_id>", methods=["POST"])
+@login_required
+def mark_notification_read(notification_id):
+    try:
+        notification = db.get_or_404(Notification, notification_id)
+
+        # Verify the notification belongs to the current user
+        if notification.user_id != current_user.id:
+            return jsonify({
+                'success': False,
+                'message': 'Unauthorized'
+            }), 403
+
+        notification.is_read = True
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Notification marked as read'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error marking notification as read: {str(e)}'
+        }), 500
+
+
+@app.route("/delete_notification/<int:notification_id>", methods=["DELETE"])
+@login_required
+def delete_notification(notification_id):
+    try:
+        notification = db.get_or_404(Notification, notification_id)
+
+        # Verify the notification belongs to the current user
+        if notification.user_id != current_user.id:
+            return jsonify({
+                'success': False,
+                'message': 'Unauthorized'
+            }), 403
+
+        db.session.delete(notification)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Notification deleted'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error deleting notification: {str(e)}'
+        }), 500
+
+
 @app.route("/logout")
 @login_required
 def logout():
