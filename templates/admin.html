@@ -431,6 +431,7 @@
                     
                     <div class="form-group">
                         <label class="form-label">Progress (<span id="progressValue">{{ report.progress }}</span>%)</label>
+                        <!-- <progress value="{{ report.progress }}" max="100"></progress> -->
                         <input type="range" min="0" max="100" value="{{ report.progress }}" class="form-control" 
                                style="height: 40px;" oninput="updateProgress(this.value)" name="progress">
                         <div class="progress-bar" style="margin-top: 0.5rem;">
