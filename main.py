@@ -602,6 +602,8 @@ def edit_profile():
 def admin_dashboard():
     all_reports = get_all_reports()
 
+    reports = get_all_reports()
+
     all_pending = get_all_specific_status_reports("pending")
 
     all_resolved = get_all_specific_status_reports("resolved")
@@ -654,6 +656,7 @@ def admin_dashboard():
 
 
     return render_template("admin.html",
+                           reports=reports,
                            all_reports=all_reports,
                            pending=all_pending,
                            resolved=all_resolved,
