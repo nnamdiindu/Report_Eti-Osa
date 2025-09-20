@@ -12,7 +12,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css"
         rel="stylesheet">
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="../static/css/admin.css">
 </head>
@@ -114,7 +114,7 @@
                         <div class="stats-card">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <p class="stats-number text-primary">{{ all_reports|length }}</p>
+                                    <p class="stats-number text-primary"></p>
                                     <p class="stats-label">Total Reports</p>
                                     <p class="stats-change positive">+12% from last month</p>
                                 </div>
@@ -181,59 +181,61 @@
                 </div>
 
                 <!-- Filters and Search -->
-                <div class="filter-section">
-                    <div class="row align-items-center">
-                        <div class="col-md-3">
-                            <div class="search-box">
-                                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <path d="m21 21-4.35-4.35"></path>
-                                </svg>
-                                <input type="text" class="form-control" placeholder="Search reports..."
-                                    id="searchInput">
+                <form action="{{ url_for('admin_dashboard') }}", method="post">
+                    <div class="filter-section">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <div class="search-box">
+                                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <circle cx="11" cy="11" r="8"></circle>
+                                        <path d="m21 21-4.35-4.35"></path>
+                                    </svg>
+                                    <input name="search-query" type="text" class="form-control" placeholder="Search reports..."
+                                        id="searchInput">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="status" class="form-select" id="status">
+                                    <option value="status">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="progress">Work in Progress</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+
+                            </div>
+                            <div class="col-md-2">
+                                <select name="priority" class="form-select" id="priority">
+                                    <option value="priority">All Priority</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select name="area" class="form-select" id="area">
+                                    <option value="areas">All Areas</option>
+                                    <option value="victoria-island">Victorial Island</option>
+                                    <option value="ikoyi">Ikoyi</option>
+                                    <option value="lekki-phase1">Lekki Phase 1</option>
+                                    <option value="lekki-phase2">Lekki Phase 2</option>
+                                    <option value="ajah">Ajah</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <input name="date" type="date" class="form-control" id="dateFilter">
+                            </div>
+                            <div class="col-md-1">
+                                <button type="submit" class="btn btn-outline-secondary">Search</button>
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="statusFilter">
-                                <option value="">All Status</option>
-                                <option value="new">New</option>
-                                <option value="assigned">Assigned</option>
-                                <option value="in-progress">In Progress</option>
-                                <option value="resolved">Resolved</option>
-                                <option value="closed">Closed</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="priorityFilter">
-                                <option value="" selected>All Priority</option>
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-select" id="areaFilter">
-                                <option value="">All Areas</option>
-                                <option value="victoria-island">Victoria Island</option>
-                                <option value="ikoyi">Ikoyi</option>
-                                <option value="lekki-phase1">Lekki Phase 1</option>
-                                <option value="lekki-phase2">Lekki Phase 2</option>
-                                <option value="ajah">Ajah</option>
-                                <option value="banana-island">Banana Island</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <input type="date" class="form-control" id="dateFilter">
-                        </div>
-                        <div class="col-md-1">
-                            <button class="btn btn-outline-secondary" onclick="clearFilters()">Clear</button>
-                        </div>
                     </div>
-                </div>
+                </form>
+
 
                 <!-- Reports Table -->
                 <div class="table-responsive">
@@ -257,7 +259,8 @@
                             {% for report in all_reports %}
                             <tr>
                                 {% set report_id = report.id %}
-                                <td><strong>#{{ report.created_at.strftime('%Y%m') }}{{ -report_id | string }}</strong></td>
+                                <td><strong>#{{ report.created_at.strftime('%Y%m') }}{{ -report_id | string }}</strong>
+                                </td>
                                 <td>{{ report.description|title }}</td>
                                 <td><span
                                         class="badge status-{{ 'assigned' if report.category == 'waste' else 'resolved' if report.category == 'environmental' else 'in-progress' if report.category == 'lighting' else 'road' if report.category == 'road' else 'new'}}">
@@ -285,11 +288,14 @@
                                 <td>{{ report.created_at.strftime("%B %d, %Y") }}</td>
                                 <td class="action-buttons">
                                     <button class="btn btn-sm btn-primary"
-                                        onclick="openModal('viewModal-{{ report.id }}')"><i class="fas fa-eye"></i> View</button>
+                                        onclick="openModal('viewModal-{{ report.id }}')"><i class="fas fa-eye"></i>
+                                        View</button>
                                     <button class="btn btn-sm btn-success"
-                                        onclick="openModal('updateModal-{{ report.id }}')"><i class="fas fa-edit"></i> Update</button>
+                                        onclick="openModal('updateModal-{{ report.id }}')"><i class="fas fa-edit"></i>
+                                        Update</button>
                                     <button class="btn btn-sm btn-warning"
-                                        onclick="openModal('assignModal-{{ report.id }}')"><i class="fas fa-user-plus"></i> Assign</button>
+                                        onclick="openModal('assignModal-{{ report.id }}')"><i
+                                            class="fas fa-user-plus"></i> Assign</button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -297,7 +303,7 @@
                     </table>
                 </div>
             </main>
-            
+
         </div>
     </div>
 
@@ -318,52 +324,53 @@
                     <div>
                         <strong>Report ID:</strong>{{ report.id }}<br>
                         <strong>Status:</strong> <span
-                                        class="badge status-{{ 'in-progress' if report.status == 'progress' else 'resolved' if report.status == 'resolved' else 'assigned' if report.status == 'assigned' else 'new' if report.status == 'pending'}}">
-                                        {{ report.status|title }}
-                                    </span>
+                            class="badge status-{{ 'in-progress' if report.status == 'progress' else 'resolved' if report.status == 'resolved' else 'assigned' if report.status == 'assigned' else 'new' if report.status == 'pending'}}">
+                            {{ report.status|title }}
+                        </span>
                     </div>
                 </div>
-                
+
                 <h3 style="margin-bottom: 1rem; color: #1f2937;">{{ report.category|title }}</h3>
-                
+
                 <div class="grid grid-cols-2">
                     <div class="info-card">
                         <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-map-marker-alt"></i> Location</h4>
                         <p>{{ report.area|title }}</p>
                         <p style="font-size: 0.8rem; color: #6b7280;">6.4474° N, 3.4478° E</p>
                     </div>
-                    
+
                     <div class="info-card">
                         <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-calendar"></i> Date Reported</h4>
                         <p>{{ report.created_at.strftime('%d %B %Y') }}</p>
                     </div>
-                    
+
                     <div class="info-card">
                         <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-user"></i> Reporter</h4>
                         <p>{{ report.user.full_name }}</p>
                     </div>
-                    
+
                     <div class="info-card">
                         <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-users"></i> Assigned Team</h4>
                         <p>{{ report.team_assigned_to }}</p>
                     </div>
                 </div>
-                
+
                 <div style="margin: 1.5rem 0;">
                     <h4 style="margin-bottom: 0.5rem;">Progress ({{ report.progress }}%)</h4>
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: {{ report.progress }}%;"></div>
                     </div>
                 </div>
-                
+
                 <div>
                     <h4 style="margin-bottom: 0.5rem;">Description</h4>
                     <p style="color: #4b5563; line-height: 1.6;">
                         {{ report.description }}
                     </p>
                 </div>
-                
-                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; gap: 1rem;">
+
+                <div
+                    style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; display: flex; gap: 1rem;">
                     <button class="btn btn-primary">
                         <i class="fas fa-download"></i> Download Report
                     </button>
@@ -390,34 +397,40 @@
                     <i class="fas fa-edit"></i>
                     <div><strong>Editing Report {{ report.id }}</strong></div>
                 </div>
-                
+
                 <form id="updateForm">
                     <div class="grid grid-cols-2">
                         <div class="form-group">
                             <label class="form-label">Title</label>
                             <input type="text" class="form-control" value="{{ report.category }}" name="title">
                         </div>
-                        
+
                         <div class="form-group">
                             <label class="form-label">Priority</label>
                             <select class="form-control" name="priority">
-                                <option value="Low" {{ 'selected' if report.priority == 'low' else '' }}>Low</option>
-                                <option value="Medium" {{ 'selected' if report.priority == 'medium' else '' }}>Medium</option>
-                                <option value="High" {{ 'selected' if report.priority == 'high' else '' }}>High</option>
-                                <option value="Urgent" {{ 'selected' if report.priority == 'urgent' else '' }}>Urgent</option>
+                                <option value="Low" {{ 'selected' if report.priority=='low' else '' }}>Low</option>
+                                <option value="Medium" {{ 'selected' if report.priority=='medium' else '' }}>Medium
+                                </option>
+                                <option value="High" {{ 'selected' if report.priority=='high' else '' }}>High</option>
+                                <option value="Urgent" {{ 'selected' if report.priority=='urgent' else '' }}>Urgent
+                                </option>
                             </select>
                         </div>
-                        
+
                         <div class="form-group">
                             <label class="form-label">Status</label>
-                            <select class="form-control" name="status" >
-                                <option value="Pending" {{ 'selected' if report.status == 'pending' else '' }}>Pending</option>
-                                <option value="Progress" {{ 'selected' if report.status == 'progress' else '' }}>In Progress</option>
-                                <option value="Resolved" {{ 'selected' if report.status == 'resolved' else '' }}>Resolved</option>
-                                <option value="Closed" {{ 'selected' if report.status == 'closed' else '' }}>Closed</option>
+                            <select class="form-control" name="status">
+                                <option value="Pending" {{ 'selected' if report.status=='pending' else '' }}>Pending
+                                </option>
+                                <option value="Progress" {{ 'selected' if report.status=='progress' else '' }}>In
+                                    Progress</option>
+                                <option value="Resolved" {{ 'selected' if report.status=='resolved' else '' }}>Resolved
+                                </option>
+                                <option value="Closed" {{ 'selected' if report.status=='closed' else '' }}>Closed
+                                </option>
                             </select>
                         </div>
-                        
+
                         <div class="form-group">
                             <label class="form-label">Assigned Team</label>
                             <select class="form-control" name="assigned_to">
@@ -428,22 +441,23 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
-                        <label class="form-label">Progress (<span id="progressValue">{{ report.progress }}</span>%)</label>
+                        <label class="form-label">Progress (<span id="progressValue">{{ report.progress
+                                }}</span>%)</label>
                         <!-- <progress value="{{ report.progress }}" max="100"></progress> -->
-                        <input type="range" min="0" max="100" value="{{ report.progress }}" class="form-control" 
-                               style="height: 40px;" oninput="updateProgress(this.value)" name="progress">
+                        <input type="range" min="0" max="100" value="{{ report.progress }}" class="form-control"
+                            style="height: 40px;" oninput="updateProgress(this.value)" name="progress">
                         <div class="progress-bar" style="margin-top: 0.5rem;">
                             <div id="progressBar" class="progress-fill" style="width: {{ report.progress }}%;"></div>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label class="form-label">Description</label>
                         <textarea class="form-control" rows="4" name="description">{{ report.description }}</textarea>
                     </div>
-                    
+
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle"></i>
                         <div>
@@ -451,7 +465,7 @@
                             Changes will be logged and team members will be notified automatically.
                         </div>
                     </div>
-                    
+
                     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Save Changes
@@ -483,7 +497,7 @@
                         {{ report.category }}
                     </div>
                 </div>
-                
+
                 <form id="assignForm">
                     <div class="grid grid-cols-2">
                         <div>
@@ -497,7 +511,7 @@
                                     <div class="workload high">85% workload</div>
                                 </div>
                             </div>
-                            
+
                             <div class="team-option" onclick="selectTeam(this, 'env_team_b')">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div>
@@ -507,7 +521,7 @@
                                     <div class="workload medium">62% workload</div>
                                 </div>
                             </div>
-                            
+
                             <div class="team-option" onclick="selectTeam(this, 'emergency')">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <div>
@@ -518,7 +532,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div>
                             <div class="form-group">
                                 <label class="form-label">Priority Level</label>
@@ -529,19 +543,20 @@
                                     <option value="Critical">Critical Priority</option>
                                 </select>
                             </div>
-                            
+
                             <div class="form-group">
                                 <label class="form-label">Deadline</label>
                                 <input type="date" class="form-control" value="2025-09-20" name="deadline">
                             </div>
-                            
+
                             <div class="form-group">
                                 <label class="form-label">Assignment Notes</label>
-                                <textarea class="form-control" rows="3" placeholder="Add specific instructions..." name="notes"></textarea>
+                                <textarea class="form-control" rows="3" placeholder="Add specific instructions..."
+                                    name="notes"></textarea>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle"></i>
                         <div>
@@ -549,7 +564,7 @@
                             The assigned team will receive email and in-app notifications.
                         </div>
                     </div>
-                    
+
                     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-paper-plane"></i> Assign Report
@@ -566,133 +581,133 @@
         </div>
     </div>
     {% endfor %}
-   <script>
-// Your existing functions - keep these as they are
-function openModal(modalId) {
-    document.getElementById(modalId).classList.add('active');
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-}
-
-function updateProgress(value) {
-    document.getElementById('progressValue').textContent = value;
-    document.getElementById('progressBar').style.width = value + '%';
-}
-
-function selectTeam(element, teamId) {
-    document.querySelectorAll('.team-option').forEach(option => {
-        option.classList.remove('selected');
-    });
-    element.classList.add('selected');
-    console.log('Selected team:', teamId);
-}
-
-// Close modals when clicking outside
-document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            modal.classList.remove('active');
+    <script>
+        // Your existing functions - keep these as they are
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
         }
-    });
-});
 
-// Fixed JavaScript for handling modal updates
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle all update forms - Fixed form selection
-    document.querySelectorAll('form[id="updateForm"]').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Get the report ID from the modal ID or a data attribute
-            const modal = this.closest('.modal');
-            const modalId = modal.id; // e.g., "updateModal-123"
-            const reportId = modalId.replace('updateModal-', '');
-            
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            
-            console.log('Update form data:', data);
-            console.log('Report ID:', reportId);
-            
-            // Fixed URL construction
-            fetch(`/update_report/${reportId}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function updateProgress(value) {
+            document.getElementById('progressValue').textContent = value;
+            document.getElementById('progressBar').style.width = value + '%';
+        }
+
+        function selectTeam(element, teamId) {
+            document.querySelectorAll('.team-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            console.log('Selected team:', teamId);
+        }
+
+        // Close modals when clicking outside
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
                 }
-                return response.json();
-            })
-            .then(result => {
-                if (result.status === 'success') {
-                    alert('Report updated successfully!');
-                    closeModal(`updateModal-${reportId}`);
-                    location.reload(); // Refresh to show changes
-                } else {
-                    alert('Error: ' + (result.message || 'Failed to update'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while updating the report: ' + error.message);
             });
         });
-    });
 
-    // Handle all assign forms - Similar fix
-    document.querySelectorAll('form[id="assignForm"]').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const modal = this.closest('.modal');
-            const modalId = modal.id;
-            const reportId = modalId.replace('assignModal-', '');
-            
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Get selected team from the selected team option
-            const selectedTeam = document.querySelector('.team-option.selected');
-            if (selectedTeam) {
-                data.team = selectedTeam.onclick.toString().match(/'(.+?)'/)[1]; // Extract team ID
-            }
-            
-            console.log('Assign form data:', data);
-            console.log('Report ID:', reportId);
-            
-            fetch(`/assign_report/${reportId}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(result => {
-                if (result.status === 'success') {
-                    alert('Report assigned successfully!');
-                    closeModal(`assignModal-${reportId}`);
-                    location.reload();
-                } else {
-                    alert('Error: ' + (result.message || 'Failed to assign'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while assigning the report: ' + error.message);
+        // Fixed JavaScript for handling modal updates
+        document.addEventListener('DOMContentLoaded', function () {
+            // Handle all update forms - Fixed form selection
+            document.querySelectorAll('form[id="updateForm"]').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    // Get the report ID from the modal ID or a data attribute
+                    const modal = this.closest('.modal');
+                    const modalId = modal.id; // e.g., "updateModal-123"
+                    const reportId = modalId.replace('updateModal-', '');
+
+                    const formData = new FormData(this);
+                    const data = Object.fromEntries(formData.entries());
+
+                    console.log('Update form data:', data);
+                    console.log('Report ID:', reportId);
+
+                    // Fixed URL construction
+                    fetch(`/update_report/${reportId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(result => {
+                            if (result.status === 'success') {
+                                alert('Report updated successfully!');
+                                closeModal(`updateModal-${reportId}`);
+                                location.reload(); // Refresh to show changes
+                            } else {
+                                alert('Error: ' + (result.message || 'Failed to update'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while updating the report: ' + error.message);
+                        });
+                });
+            });
+
+            // Handle all assign forms - Similar fix
+            document.querySelectorAll('form[id="assignForm"]').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    const modal = this.closest('.modal');
+                    const modalId = modal.id;
+                    const reportId = modalId.replace('assignModal-', '');
+
+                    const formData = new FormData(this);
+                    const data = Object.fromEntries(formData.entries());
+
+                    // Get selected team from the selected team option
+                    const selectedTeam = document.querySelector('.team-option.selected');
+                    if (selectedTeam) {
+                        data.team = selectedTeam.onclick.toString().match(/'(.+?)'/)[1]; // Extract team ID
+                    }
+
+                    console.log('Assign form data:', data);
+                    console.log('Report ID:', reportId);
+
+                    fetch(`/assign_report/${reportId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(result => {
+                            if (result.status === 'success') {
+                                alert('Report assigned successfully!');
+                                closeModal(`assignModal-${reportId}`);
+                                location.reload();
+                            } else {
+                                alert('Error: ' + (result.message || 'Failed to assign'));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while assigning the report: ' + error.message);
+                        });
+                });
             });
         });
-    });
-});
-</script>
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
