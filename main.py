@@ -613,7 +613,7 @@ def admin_dashboard():
         priority = request.form.get("priority")
         area = request.form.get("area")
         date = request.form.get("date")
-        search = request.form.get("search-query")
+        search = request.form.get("search-query").replace(" ", "-")
 
         query = Report.query
 
@@ -626,7 +626,6 @@ def admin_dashboard():
                 Report.area.ilike(f"%{search}%"),
                 Report.priority.ilike(f"%{search}%"),
                 Report.status.ilike(f"%{search}%"),
-                Report.progress.ilike(f"%{search}%")
             )
             filters.append(search_filter)
 
