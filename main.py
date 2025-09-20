@@ -6,7 +6,7 @@ from flask import Flask, redirect, render_template, url_for, request, flash, Res
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
 from flask_login import login_required, login_user, current_user, LoginManager, logout_user, UserMixin
-from sqlalchemy import String, Integer, ForeignKey, Float, LargeBinary, select, DateTime, Boolean
+from sqlalchemy import String, Integer, ForeignKey, Float, LargeBinary, select, DateTime, Boolean, and_, func, or_
 from werkzeug.security import generate_password_hash, check_password_hash
 from enum import Enum as PyEnum
 
@@ -108,7 +108,6 @@ class User(UserMixin, db.Model):
     reports: Mapped[list["Report"]] = relationship("Report", back_populates="user")
     notifications: Mapped[list["Notification"]] = relationship("Notification", back_populates="user",
                                                                cascade="all, delete-orphan")
-
 
 
 @login_manager.user_loader
@@ -609,8 +608,57 @@ def admin_dashboard():
 
     all_progress = get_all_specific_status_reports("progress")
 
-    return render_template("admin.html", all_reports=all_reports, pending=all_pending,
-                           resolved=all_resolved, progress=all_progress)
+    if request.method == "POST":
+        status = request.form.get("status")
+        priority = request.form.get("priority")
+        area = request.form.get("area")
+        date = request.form.get("date")
+        search = request.form.get("search-query")
+
+        query = Report.query
+
+        filters = []
+
+        if search:
+            search_filter = or_(
+                Report.category.ilike(f"%{search}%"),
+                Report.description.ilike(f"%{search}%"),
+                Report.area.ilike(f"%{search}%"),
+                Report.priority.ilike(f"%{search}%"),
+                Report.status.ilike(f"%{search}%"),
+                Report.progress.ilike(f"%{search}%")
+            )
+            filters.append(search_filter)
+
+        if status and status != "status":
+            filters.append(Report.status == status)
+
+        if priority and priority != "priority":
+            filters.append(Report.priority == priority)
+
+        if area and area != "areas":
+            filters.append(Report.area == area)
+
+        if date:
+            try:
+                filter_date = datetime.strptime(date, '%Y-%m-%d').date()
+                filters.append(func.date(Report.created_at) == filter_date)
+            except ValueError:
+                pass
+
+        if filters:
+            query = query.filter(and_(*filters))
+
+        # Order by created_at desc for most recent first
+        query = query.order_by(Report.created_at.desc())
+        all_reports = query
+
+
+    return render_template("admin.html",
+                           all_reports=all_reports,
+                           pending=all_pending,
+                           resolved=all_resolved,
+                           progress=all_progress)
 
 
 @app.route('/update_report/<int:report_id>', methods=['POST'])
