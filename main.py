@@ -376,7 +376,7 @@ def report_issue():
 
                     if not is_valid_file:
                         flash(
-                            f"Invalid file type for {uploaded_file.filename}. Please upload only image or video files.")
+                            f"Invalid file type for {uploaded_file.filename}. Please upload only image or video files.", "warning")
                         return redirect(url_for("report_issue"))
 
                     # Check file size
@@ -384,7 +384,7 @@ def report_issue():
                     file_size = len(file_data)
 
                     if file_size > max_file_size:
-                        flash(f"File {uploaded_file.filename} is too large. Please upload files smaller than 10MB.")
+                        flash(f"File {uploaded_file.filename} is too large. Please upload files smaller than 10MB.", "warning")
                         return redirect(url_for("report_issue"))
 
                     # Store valid file info
@@ -438,9 +438,9 @@ def report_issue():
             db.session.commit()
 
             if valid_files:
-                flash(f"Report successfully submitted with {len(valid_files)} file(s).")
+                flash(f"Report successfully submitted with {len(valid_files)} file(s).", "success")
             else:
-                flash("Report successfully submitted.")
+                flash("Report successfully submitted.", "success")
 
         except Exception as e:
             db.session.rollback()
@@ -787,7 +787,7 @@ def update_report(report_id):
 #             return jsonify({'status': 'error', 'message': 'No data provided'}), 400
 #
 #         # Find the specific report
-#         report = db.get_or_404(Reports, report_id)
+#         report = db.get_or_404(Report, report_id)
 #
 #         # Check if user is admin
 #         if current_user.id != 1:
