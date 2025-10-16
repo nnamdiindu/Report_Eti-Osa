@@ -17,13 +17,17 @@
                     <p class="text-muted">Help improve your community by reporting issues</p>
                 </div>
             </div>
-            {% with messages = get_flashed_messages() %}
-            {% if messages %}
-            {% for message in messages %}
-            <p style="color: red; font-size: 12px; text-align: center;" class="flash text-danger">{{ message }}</p>
-            {% endfor %}
-            {% endif %}
-            {% endwith %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
+                        role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    {% endwith %}
             <form class="needs-validation" action="{{ url_for('report_issue') }}" method="post"
                 enctype="multipart/form-data">
                 <div class="row g-3">
